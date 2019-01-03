@@ -8,7 +8,6 @@
 #import <Foundation/Foundation.h>
 
 @interface BConfiguration : NSObject {
-    NSString * _defaultUserName;
 }
 
 // Background color of messages: hex value like "FFFFFF"
@@ -24,7 +23,7 @@
 
 // What will the user be called when they first sign up and before they
 // set their name
-@property (nonatomic, readonly) NSString * defaultUserName;
+@property (nonatomic, readwrite) NSString * defaultUserName;
 @property (nonatomic, readwrite) NSString * defaultUserNamePrefix;
 
 // Should empty chats be shown in the threads view?

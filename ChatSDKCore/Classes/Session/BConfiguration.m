@@ -15,7 +15,7 @@
 @synthesize rootPath;
 @synthesize appBadgeEnabled;
 @synthesize defaultUserNamePrefix;
-@synthesize defaultUserName = _defaultUserName;
+@synthesize defaultUserName;
 @synthesize showEmptyChats;
 @synthesize allowUsersToCreatePublicChats;
 @synthesize googleLoginEnabled;
@@ -41,6 +41,8 @@
         rootPath = @"default";
         appBadgeEnabled = YES;
         defaultUserNamePrefix = @"ChatSDK";
+        defaultUserName = @"";
+
         showEmptyChats = NO;
         allowUsersToCreatePublicChats = NO;
         
@@ -69,10 +71,6 @@
         
     }
     return self;
-}
-
--(void) setDefaultUserNamePrefix:(NSString *)defaultUserNamePrefix {
-     _defaultUserName = [defaultUserNamePrefix stringByAppendingFormat:@"%i", arc4random() % 999];
 }
 
 -(void) configureForCompatibilityWithVersions: (NSArray *) versions {
