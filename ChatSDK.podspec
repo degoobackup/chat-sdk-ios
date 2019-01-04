@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "ChatSDK"
-  s.version          = "4.5.0.1"
+  s.version          = "4.5.0.2"
   s.summary          = "Chat SDK - Mobile messaging framework for iOS"
   s.homepage         = "http://chatsdk.co"
   s.license          = { :type => 'Chat SDK License', :file => 'LICENSE.md' }
@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   s.subspec 'Core' do |core| 
 
 	  core.source_files = ['ChatSDKCore/Classes/**/*']
-	  core.private_header_files = ['ChatSDKCore/Utilities/PHasMeta.h']
+	  core.private_header_files = ['ChatSDKCore/Classes/Utilities/PHasMeta.h']
 	  core.resource_bundles = {
 		'ChatCore' => ['ChatSDKCore/Assets/**/*']
 	  }
