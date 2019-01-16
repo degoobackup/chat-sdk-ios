@@ -60,3 +60,4 @@ ChatSDKModules/
 !/ChatSDKFirebase/
 !/ChatSDKFirebaseAdapter/
 !/ChatSDKModules/
+XcodeSwift/ChatSDKSwift.xcodeproj/project.pbxproj
