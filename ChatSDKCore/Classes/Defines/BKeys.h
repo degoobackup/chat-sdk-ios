@@ -24,8 +24,6 @@
 #define bTokenKey @"token"
 
 // Underscore keys
-#define bPayload @"payload"
-#define bJSON @"JSON"
 #define bJSONV2 @"json_v2"
 #define bType @"type"
 #define bTypeV4 @"type_v4"
@@ -73,8 +71,8 @@
 #define bLoginPasswordKey @"login-password"
 #define bLoginCustomToken @"custom-token"
 
-#define bUserStateKey @"bUserStateKey"
-#define bUserStatusTextKey @"bUserStatusTextKey"
+#define bUserStateKey @"state"
+#define bUserStatusTextKey bStatus
 #define bUserNameKey @"name"
 #define bUserEmailKey @"email"
 #define bUserPublicKeysKey @"public-keys"

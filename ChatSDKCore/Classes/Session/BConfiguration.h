@@ -24,6 +24,9 @@
     NSMutableDictionary * _messageBubbleMargin;
 }
 
+// Should we ask the user to allow notifications when the app initially loads up? 
+@property (nonatomic, readwrite) BOOL shouldAskForNotificationsPermission;
+    
 // Background color of messages: hex value like "FFFFFF"
 @property (nonatomic, readwrite) NSString * messageColorMe;
 @property (nonatomic, readwrite) NSString * messageColorReply;
@@ -58,6 +61,17 @@
 // users will create a large number of chats
 @property (nonatomic, readwrite) BOOL allowUsersToCreatePublicChats;
 
+// How many historic messages should be downloaded for an empty thread
+@property (nonatomic, readwrite) int messageHistoryDownloadLimit;
+
+// How many message deletion listeners should we add? A value of 10 would mean
+// that if any of the last 10 messages are deleted, the app would be updated
+@property (nonatomic, readwrite) int messageDeletionListenerLimit;
+
+// The maximum age of a read receipt. Any older than this and we
+// won't add the read receipt listener
+@property (nonatomic, readwrite) float readReceiptMaxAgeInSeconds;
+
 // Enable or disable social login options
 @property (nonatomic, readwrite) BOOL googleLoginEnabled;
 @property (nonatomic, readwrite) BOOL facebookLoginEnabled;
@@ -75,6 +89,10 @@
 @property (nonatomic, readwrite) int xmppPort;
 @property (nonatomic, readwrite) NSString * xmppResource;
 @property (nonatomic, readwrite) int xmppMucMessageHistory;
+
+// The message view text input box, max lines and characters
+@property (nonatomic, readwrite) int textInputViewMaxLines;
+@property (nonatomic, readwrite) int textInputViewMaxCharacters;
 
 // Google login credentials
 @property (nonatomic, readwrite) NSString * googleClientKey;
@@ -103,6 +121,9 @@
 
 // Allow the owner of a public thread to delete it
 @property (nonatomic, readwrite) BOOL allowPublicThreadDeletion;
+
+// Show the unread message badge for public threads
+@property (nonatomic, readwrite) BOOL showPublicThreadsUnreadMessageBadge;
 
 // Can the user click the title bar to open the chat info
 @property (nonatomic, readwrite) BOOL userChatInfoEnabled;
@@ -177,24 +198,6 @@
 
 // Show local notifications when a message is received
 @property (nonatomic, readwrite) BOOL showLocalNotifications;
-
-// Message data properties
-// This should be used for backwards compatibility with v3 of the project
-@property (nonatomic, readwrite) BOOL includeMessagePayload;
-
-// This should be enabled for compatibility with any version less than 4.3.x
-@property (nonatomic, readwrite) BOOL includeMessageJSON;
-
-// In the future we will be moving towards using native JSON for the message payload enable this for 4.4.x+
-@property (nonatomic, readwrite) BOOL includeMessageJSONV2;
-
-#define bChatSDK_API_1 @"3.x"
-#define bChatSDK_API_2 @"4.0.0 - 4.3.18"
-#define bChatSDK_API_3 @"4.4.0+"
-
-// Configure Chat SDK to support the API levels of choice
-// The default version supports all API levels
--(void) configureForCompatibilityWithVersions: (NSArray *) versions;
 
 +(BConfiguration *) configuration;
 
