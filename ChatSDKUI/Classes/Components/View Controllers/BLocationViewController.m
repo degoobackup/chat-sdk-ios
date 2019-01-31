@@ -7,8 +7,8 @@
 //
 
 #import "BLocationViewController.h"
-#import <ChatSDK/ChatCore.h>
-#import <ChatSDK/ChatUI.h>
+#import <ChatSDK/Core.h>
+#import <ChatSDK/UI.h>
 
 @interface BLocationViewController ()
 
@@ -16,13 +16,12 @@
 
 @implementation BLocationViewController
 
-@synthesize mapView;
 @synthesize region;
 @synthesize annotation;
 
 -(instancetype) initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     
-    self = [super initWithNibName:@"BLocationViewController" bundle:[NSBundle chatUIBundle]];
+    self = [super initWithNibName:@"BLocationViewController" bundle:[NSBundle uiBundle]];
     if (self) {
         self.title = [NSBundle t:bLocation];
     }
@@ -41,9 +40,24 @@
 -(void) viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     
-    [mapView setRegion:region animated:NO];
-    [mapView addAnnotation:annotation];
-    [mapView selectAnnotation:annotation animated:NO];
+    _map = [BMapViewManager sharedManager].mapFromPool;
+    [self.view addSubview:_map.mapView];
+    
+    _map.mapView.keepInsets.equal = 0;
+    
+    [_map.mapView setRegion:region animated:NO];
+    [_map.mapView addAnnotation:annotation];
+    [_map.mapView selectAnnotation:annotation animated:NO];
+}
+
+-(void) setLatitude: (double) latitude longitude: (double) longitude {
+    self.region = [BCoreUtilities regionForLongitude:longitude latitude:latitude];
+    self.annotation = [BCoreUtilities annotationForLongitude:longitude latitude:latitude];
+
+}
+
+-(void) viewWillDisappear:(BOOL)animated {
+    [[BMapViewManager sharedManager] returnToPool:_map];
 }
 
 -(void) backButtonPressed {

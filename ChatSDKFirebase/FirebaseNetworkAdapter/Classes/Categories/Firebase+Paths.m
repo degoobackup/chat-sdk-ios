@@ -8,16 +8,12 @@
 
 #import "Firebase+Paths.h"
 
-#import "ChatFirebaseAdapter.h"
-
-#import <ChatSDK/BSettingsManager.h>
-#import <ChatSDK/BKeys.h>
+#import <ChatSDKFirebase/FirebaseAdapter.h>
 
 @implementation FIRDatabaseReference (Paths)
 
-
 +(FIRDatabaseReference *) firebaseRef {
-    return [[[FIRDatabase database] reference] c: [BSettingsManager firebaseRootPath]];
+    return [[[FIRDatabase database] reference] c: BChatSDK.config.rootPath];
 }
 
 -(FIRDatabaseReference *) c: (NSString *) component {
@@ -37,7 +33,7 @@
 }
 
 +(FIRDatabaseReference *) userMetaRef: (NSString *) firebaseID {
-    return [[[self usersRef] child:firebaseID] child:bMetaDataPath];
+    return [[[self usersRef] child:firebaseID] child:bMetaPath];
 }
 
 +(FIRDatabaseReference *) userThreadsRef: (NSString *) firebaseID {
@@ -55,8 +51,12 @@
 
 #pragma Flag ref
 
-+(FIRDatabaseReference *) flaggedRefWithThread: (NSString *) threadID message: (NSString *) messageID {
-    return [[[[[self.firebaseRef c: bFlaggedKey]  c:bThreadsPath] c:threadID] c:bMessagesPath] c:messageID];
++(FIRDatabaseReference *) flaggedMessagesRef {
+    return [[self.firebaseRef c:bFlaggedKey] c:bMessagesPath];
+}
+
++(FIRDatabaseReference *) flaggedRefWithMessage: (NSString *) messageID {
+    return [[self flaggedMessagesRef] c:messageID];
 }
 
 #pragma Messages / Threads
@@ -67,6 +67,10 @@
 
 +(FIRDatabaseReference *) threadRef: (NSString *) firebaseID {
     return [[self threadsRef] child:firebaseID];
+}
+
++(FIRDatabaseReference *) threadLastMessageRef: (NSString *) firebaseID {
+    return [[[self threadsRef] child:firebaseID] child:bLastMessage];;
 }
 
 +(FIRDatabaseReference *) threadUsersRef: (NSString *) firebaseID {
@@ -86,7 +90,7 @@
 }
 
 +(FIRDatabaseReference *) threadMetaRef: (NSString *) firebaseID {
-    return [[self threadRef:firebaseID] child:bMetaDataPath];
+    return [[self threadRef:firebaseID] child:bMetaPath];
 }
 
 #pragma Indexes

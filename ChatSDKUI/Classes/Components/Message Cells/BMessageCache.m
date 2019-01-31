@@ -8,8 +8,8 @@
 
 #import "BMessageCache.h"
 
-#import <ChatSDK/ChatCore.h>
-#import <ChatSDK/ChatUI.h>
+#import <ChatSDK/Core.h>
+#import <ChatSDK/UI.h>
 
 
 #define bMessagePositionKey @"bMessagePositionKey"
@@ -63,19 +63,20 @@ static BMessageCache * cache;
     // Color
     NSString * colorString = Nil;
     if (isMine) {
-        colorString = [BChatSDK shared].configuration.messageColorMe;
+        colorString = BChatSDK.shared.configuration.messageColorMe;
     }
     else {
-        colorString = [BChatSDK shared].configuration.messageColorReply;
+        colorString = BChatSDK.shared.configuration.messageColorReply;
     }
 
     NSString * imageIdentifier = [NSString stringWithFormat:@"%@%@%i%f", bubbleImageName, colorString, isMine, weight];
+    
     if(_messageBubbleImages[imageIdentifier]) {
         return _messageBubbleImages[imageIdentifier];
     }
     else {
 
-        UIImage * bubbleImage = [NSBundle chatUIImageNamed:bubbleImageName];
+        UIImage * bubbleImage = [NSBundle uiImageNamed:bubbleImageName];
 
         if (isMine) {
             bubbleImage = [bubbleImage stretchableImageWithLeftCapWidth:bLeftCapRight topCapHeight:bTopCap];

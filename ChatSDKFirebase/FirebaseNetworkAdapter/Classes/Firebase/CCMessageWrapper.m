@@ -7,10 +7,8 @@
 //
 
 #import "CCMessageWrapper.h"
-
-#import "ChatFirebaseAdapter.h"
-#import <ChatSDK/ChatCore.h>
-
+#import <ChatSDKFirebase/FirebaseAdapter.h>
+#import <ChatSDK/CDMessage.h>
 
 @implementation CCMessageWrapper
 
@@ -21,7 +19,7 @@
 -(id) initWithSnapshot: (FIRDataSnapshot *) snapshot {
     if ((self = [self init])) {
         NSString * entityID = snapshot.key;
-        _model = [[BStorageManager sharedManager].a fetchOrCreateEntityWithID:entityID withType:bMessageEntity];
+        _model = [BChatSDK.db fetchOrCreateEntityWithID:entityID withType:bMessageEntity];
         [self deserialize:snapshot.value];
     }
     return self;
@@ -41,18 +39,14 @@
 #pragma DB Methods
 
 +(id) messageWithID: (NSString *) entityID {
-    id<PMessage> model = [[BStorageManager sharedManager].a fetchEntityWithID:entityID withType:bMessageEntity];
+    id<PMessage> model = [BChatSDK.db fetchEntityWithID:entityID withType:bMessageEntity];
     if (!model) {
-        model = [[BStorageManager sharedManager].a createEntity:bMessageEntity];
+        model = [BChatSDK.db createMessageEntity];
     }
     return [[CCMessageWrapper alloc] initWithModel:model];
 }
 
 -(void) save {
-    
-}
-
--(void) delete {
     
 }
 
@@ -62,50 +56,37 @@
     
     RXPromise * promise = [RXPromise new];
 
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-
-        // Add the message to Firebase
-        FIRDatabaseReference * ref = [self ref];
-        _model.entityID = ref.key;
-
-        [ref setValue:[self serialize] andPriority:[FIRServerValue timestamp] withCompletionBlock:^(NSError * error, FIRDatabaseReference * ref) {
-            if (!error) {
-                [promise resolveWithResult:self];
-            }
-            else {
-                _model.entityID = Nil;
-                [promise rejectWithReason:error];
-            }
-        }];
-        
-    });
-        
+    // Add the message to Firebase
+    FIRDatabaseReference * ref = [self ref];
+    _model.entityID = ref.key;
+    [ref setValue:[self serialize] andPriority: FIRServerValue.timestamp withCompletionBlock:^(NSError * error, FIRDatabaseReference * ref) {
+        if (!error) {
+            [promise resolveWithResult:self];
+        }
+        else {
+            _model.entityID = Nil;
+            [promise rejectWithReason:error];
+        }
+    }];
+    
     return promise;
 }
 
 -(NSDictionary *) lastMessageData {
     NSMutableDictionary * data = self.serialize;
-    data[b_UserName] = self.model.userModel.name; // TODO: Remove this
-    [data removeObjectForKey:b_ReadPath];
-    [data removeObjectForKey:b_Meta];
+    data[bUserName] = self.model.userModel.name; // TODO: Remove this
+    [data removeObjectForKey:bReadPath];
+    [data removeObjectForKey:bMetaPath];
     return data;
 }
 
 -(NSMutableDictionary *) serialize {
-    NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithDictionary:@{b_Type: _model.type,
-                                                                                 b_Date: [FIRServerValue timestamp],
-                                                                                 b_UserFirebaseID: _model.userModel.entityID,
-                                                                                 b_ReadPath: self.initialReadReceipts,
-                                                                                 b_Meta: _model.metaDictionary ? _model.metaDictionary : @{}}];
-    if([BChatSDK config].includeMessagePayload) {
-        dict[b_Payload] = _model.textString;
-    }
-    if([BChatSDK config].includeMessageJSON) {
-        dict[b_JSON] = _model.text;
-    }
-    if([BChatSDK config].includeMessageJSONV2) {
-        dict[b_JSONV2] = _model.json;
-    }
+    NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithDictionary:@{bType: _model.type,
+                                                                                 bJSONV2: _model.json,
+                                                                                 bDate: [FIRServerValue timestamp],
+                                                                                 bUserFirebaseID: _model.userModel.entityID,
+                                                                                 bReadPath: self.initialReadReceipts,
+                                                                                 bMetaPath: _model.meta ? _model.meta : @{}}];
 
     return dict;
 }
@@ -113,82 +94,62 @@
 -(NSDictionary *) initialReadReceipts {
     // Setup the initial read receipts
     NSMutableDictionary * readReceipts = [NSMutableDictionary new];
+    id<PUser> currentUser = BChatSDK.currentUser;
     for (id<PUser> user in self.model.thread.users) {
-        if (![user isEqual:NM.currentUser]) {
-            readReceipts[user.entityID] = @{b_Status: @(bMessageReadStatusNone)};
+        if (![user isEqual:currentUser]) {
+            readReceipts[user.entityID] = @{bStatus: @(bMessageReadStatusNone)};
         }
     }
     return readReceipts;
-}
-
--(void) handlePayload: (NSString *) payload __deprecated_msg("From version 4 onwards messages should be encoded using JSON."); {
-    
-    NSData *jsonData = [payload dataUsingEncoding:NSUTF8StringEncoding];
-    NSError *e;
-    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&e];
-    
-    // This is encoded as JSON
-    if(dict[@"text"]) {
-        [_model setText:payload];
-    }
-    else {
-        [_model setTextAsDictionary:@{bMessageTextKey: payload}];
-    }
-
 }
 
 -(RXPromise *) deserialize: (NSDictionary *) value {
     
     RXPromise * promise = [RXPromise new];
     
-    NSDictionary * json2 = value[b_JSONV2];
+    NSDictionary * json2 = value[bJSONV2];
     if(json2) {
         [_model setJson:json2];
     }
     else {
-        // Version 4 uses a JSON string so if this property is set, we use it!
-        NSString * json = value[b_JSON];
-        if (json) {
-            [_model setText:json];
-        }
-        else {
-            NSString * payload = value[b_Payload];
-            if (payload) {
-                [self handlePayload:payload];
-            }
-        }
+        [_model setText:@""];
     }
     
-    NSNumber * messageType = value[b_Type];
+    NSNumber * messageType = value[bType];
     if (messageType) {
         _model.type = messageType;
     }
     
-    NSNumber * date = value[b_Date];
+    NSNumber * date = value[bDate];
     if (date) {
         _model.date = [BFirebaseCoreHandler timestampToDate:date];
     }
     
-    NSDictionary * readReceipts = value[b_ReadPath];
+    NSDictionary * readReceipts = value[bReadPath];
     if (readReceipts) {
         [_model setReadStatus:readReceipts];
         // TODO: Remove this
         //[_model setReadReceipts:readReceipts];
     }
     
-    NSDictionary * meta = value[b_Meta];
+    NSDictionary * meta = value[bMetaPath];
     if (meta) {
-        [_model setMetaDictionary:meta];
+        [_model setMeta:meta];
     }
     
     // Assign this message to a user
-    NSString * userID = value[b_UserFirebaseID];
+    NSString * userID = value[bUserFirebaseID];
     if (userID) {
-        _model.userModel = [[BStorageManager sharedManager].a fetchEntityWithID:userID withType:bUserEntity];
+        _model.userModel = [BChatSDK.db fetchEntityWithID:userID withType:bUserEntity];
         if(!_model.userModel) {
-            id<PUser> user = [[BStorageManager sharedManager].a fetchOrCreateEntityWithID:userID withType:bUserEntity];
+            id<PUser> user = [BChatSDK.db fetchOrCreateEntityWithID:userID withType:bUserEntity];
             [promise resolveWithResult:[[CCUserWrapper userWithModel:user] once].thenOnMain(^id(id success) {
-                _model.userModel = user;
+                CDMessage * model = (CDMessage*)self->_model;
+                if (model) {
+                    [model.managedObjectContext performBlockAndWait:^{
+                        model.userModel = user;
+                    }];
+                }
                 [[NSNotificationCenter defaultCenter] postNotificationName:bNotificationMessageUpdated
                                                                     object:Nil
                                                                   userInfo:@{bNotificationMessageUpdatedKeyMessage: self.model}];
@@ -224,12 +185,13 @@
 -(RXPromise *) flag {
     RXPromise * promise = [RXPromise new];
     
-    NSDictionary * data = @{b_CreatorEntityID: NM.currentUser.entityID,
-                            b_SenderEntityID: _model.userModel.entityID,
-                            b_Message: _model.textString,
-                            b_Date: [FIRServerValue timestamp]};
+    NSDictionary * data = @{bCreatorEntityID: BChatSDK.currentUser.entityID,
+                            bSenderEntityID: _model.userModel.entityID,
+                            bMessage: _model.compatibilityMeta,
+                            bThread: _model.thread.entityID,
+                            bDate: [FIRServerValue timestamp]};
     
-    FIRDatabaseReference * ref = [FIRDatabaseReference flaggedRefWithThread:_model.thread.entityID message:_model.entityID];
+    FIRDatabaseReference * ref = [FIRDatabaseReference flaggedRefWithMessage:_model.entityID];
     [ref setValue:data withCompletionBlock:^(NSError * error, FIRDatabaseReference * ref) {
         if (!error) {
             _model.flagged = @YES;
@@ -244,7 +206,7 @@
 
 -(RXPromise *) unflag {
     RXPromise * promise = [RXPromise new];
-    FIRDatabaseReference * ref = [FIRDatabaseReference flaggedRefWithThread:_model.thread.entityID message:_model.entityID];
+    FIRDatabaseReference * ref = [FIRDatabaseReference flaggedRefWithMessage:_model.entityID];
     [ref removeValueWithCompletionBlock:^(NSError * error, FIRDatabaseReference * ref) {
         if (!error) {
             _model.flagged = @NO;
@@ -257,11 +219,35 @@
     return promise;
 }
 
+-(RXPromise *) delete {
+    RXPromise * promise = [RXPromise new];
+    CCThreadWrapper * threadWrapper = [CCThreadWrapper threadWithModel:self.model.thread];
+    
+    FIRDatabaseReference *ref = [[FIRDatabaseReference threadMessagesRef:_model.thread.entityID] child:_model.entityID];
+    [ref removeValueWithCompletionBlock:^(NSError * error, FIRDatabaseReference * ref) {
+        if (!error) {
+            [threadWrapper updateLastMessage].thenOnMain(^id(id success) {
+                NSLog(@"–––– Removed message");
+                [promise resolveWithResult:Nil];
+                return Nil;
+            }, ^id(NSError * error) {
+                [promise rejectWithReason:error];
+                return Nil;
+            });
+        }
+        else {
+            [promise rejectWithReason:error];
+        }
+    }];
+
+    return promise;
+}
+
 -(FIRDatabaseReference *) ref {
     if (_model.entityID) {
         // Check to see if this message is a virtual message i.e. it's been threaded
         // from a different thread
-        NSString * originalThreadID = [_model metaValueForKey:bMessageOriginalThreadEntityID];
+        NSString * originalThreadID = [_model.meta metaValueForKey:bMessageOriginalThreadEntityID];
         if(!originalThreadID) {
             originalThreadID = _model.thread.entityID;
         }

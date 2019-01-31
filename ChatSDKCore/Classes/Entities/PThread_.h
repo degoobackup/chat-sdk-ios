@@ -38,10 +38,6 @@ typedef enum {
     bThreadTypePrivateV3 = 0,
     bThreadTypePublicV3 = 1,
     
-} bThreadType;
-
-typedef enum {
-    
     // Filters
     bThreadFilterPrivate = bThreadType1to1 | bThreadTypePrivateGroup | bThreadTypePrivateBroadcast | bThreadTypeThreadedBroadcast,
     
@@ -52,10 +48,9 @@ typedef enum {
     
     bThreadFilterPrivateThread = bThreadTypePrivateGroup | bThreadType1to1,
     
-    
-} bThreadFilter;
+} bThreadType;
 
-@protocol PThread <PEntity, PHasMeta, PElmThread>
+@protocol PThread <PEntity, PElmThread>
 
 -(void) setCreator: (id<PUser>) user;
 -(id<PUser>) creator;
@@ -73,9 +68,6 @@ typedef enum {
 -(NSString *) name;
 -(NSString *) memberListString;
 
--(void) setLastMessageAdded: (NSDate *) date;
--(NSDate *) lastMessageAdded;
-
 -(void) setDeleted: (NSNumber *) deleted;
 -(NSNumber *) deleted_;
 
@@ -88,6 +80,7 @@ typedef enum {
 
 -(NSSet *) users;
 -(id<PUser>) otherUser;
+-(id<PMessage>) lazyLastMessage;
 
 -(void) markRead;
 -(int) unreadMessageCount;
@@ -102,10 +95,13 @@ typedef enum {
 -(NSArray *) loadMoreMessages: (NSInteger) numberOfMessages;
 -(void) resetMessages;
 
--(NSDictionary *) metaDictionary;
--(void) setMetaDictionary: (NSDictionary *) meta;
 -(UIImage *)imageForThread;
 -(NSDate *) orderDate;
+-(void) clearMessageCache;
+
+-(void) setMeta: (NSDictionary *) meta;
+-(NSDictionary *) meta;
+-(void) setMetaValue: (id) value forKey: (NSString *) key;
 
 @end
 

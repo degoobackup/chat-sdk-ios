@@ -7,6 +7,7 @@
 //
 
 #import "BEntity.h"
+
 #import <ChatSDK/PMessageWrapper.h>
 
 @class CDMessage;
@@ -14,7 +15,7 @@
 @class FIRDataSnapshot;
 
 @interface CCMessageWrapper : BEntity <PMessageWrapper> {
-    id<PMessage> _model;
+    NSObject<PMessage> * _model;
 }
 
 /**
@@ -39,6 +40,9 @@
 
 -(RXPromise *) flag;
 -(RXPromise *) unflag;
+-(RXPromise *) delete;
+
+-(NSDictionary *) lastMessageData;
 
 -(FIRDatabaseReference *) ref;
 

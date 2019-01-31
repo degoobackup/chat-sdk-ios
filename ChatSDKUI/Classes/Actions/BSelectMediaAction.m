@@ -6,8 +6,8 @@
 //
 
 #import "BSelectMediaAction.h"
-#import <ChatSDK/ChatCore.h>
-#import <ChatSDK/ChatUI.h>
+#import <ChatSDK/Core.h>
+#import <ChatSDK/UI.h>
 
 @implementation BSelectMediaAction
 
@@ -163,7 +163,7 @@
     
     if (!thumbnailImageRef) NSLog(@"thumbnailImageGenerationError %@", igError);
     UIImage * thumbnailImage = thumbnailImageRef ? [[UIImage alloc] initWithCGImage:thumbnailImageRef]: nil;
-    
+        
     return thumbnailImage;
 }
 

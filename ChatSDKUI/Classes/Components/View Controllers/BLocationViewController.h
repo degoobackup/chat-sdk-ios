@@ -8,10 +8,14 @@
 
 #import <UIKit/UIKit.h>
 #import <MapKit/MapKit.h>
+#import <ChatSDK/PLocationViewController.h>
 
-@interface BLocationViewController : UIViewController
+@class BMapViewWrapper;
 
-@property (weak, nonatomic) IBOutlet MKMapView *mapView;
+@interface BLocationViewController : UIViewController<PLocationViewController> {
+    BMapViewWrapper * _map;
+}
+
 
 @property (nonatomic, readwrite) MKCoordinateRegion region;
 @property (nonatomic, readwrite) MKPointAnnotation * annotation;

@@ -24,6 +24,11 @@
 @class BThreadDef;
 @class NSFetchRequest;
 
+typedef enum {
+    bQueueTypeMain,
+    bQueueTypeBackground,
+} bQueueType;
+
 @protocol BStorageAdapter <NSObject>
 
 -(NSArray *) fetchEntitiesWithName: (NSString *) entityName withPredicate: (NSPredicate *) predicate;
@@ -34,13 +39,11 @@
 -(id<PThread>) fetchThreadWithUsers: (NSArray *) users;
 -(id) executeFetchRequest: (NSFetchRequest *) fetchRequest entityName: (NSString *) entityName predicate: (NSPredicate *) predicate;
 
--(id<PMessage>) messageForMessageDef: (BMessageDef *) builder;
--(id<PThread>) threadForThreadDef: (BThreadDef *) def;
-
 -(id<PMessage>) createMessageEntity;
 -(id<PThread>) createThreadEntity;
 
--(void) save;
+-(RXPromise *) save;
+-(void) saveToStore;
 
 -(id) createEntity: (NSString *) entityName;
 
@@ -52,6 +55,18 @@
 -(void) deleteEntitiesWithType: (NSString *) type;
 -(void) deleteEntities: (NSArray *) entities;
 -(void) deleteAllData;
+
+-(id<PThread>) threadForEntityID: (NSString *) entityID;
+-(id<PUser>) userForEntityID: (NSString *) entityID;
+-(id<PMessage>) messageForEntityID: (NSString *) entityID;
+
+-(NSArray *) fetchUserConnectionsWithType: (bUserConnectionType) type entityID: (NSString *) entityID;
+-(NSArray *) fetchUserConnectionsWithType: (bUserConnectionType) type;
+
+-(RXPromise *) performOnPrivate: (id (^)(void)) block;
+-(RXPromise *) performOnMain: (id (^)(void)) block;
+-(bQueueType) queueType;
+
 
 @end
 

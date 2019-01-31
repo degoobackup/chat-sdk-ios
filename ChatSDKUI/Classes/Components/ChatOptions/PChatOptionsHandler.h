@@ -17,12 +17,12 @@
 
 @optional
 
--(instancetype) initWithChatViewController: (BChatViewController *) chatViewController;
+-(instancetype) initWithDelegate: (id<BChatOptionDelegate>) delegate;
 
 -(BOOL) show;
 -(BOOL) hide;
--(void) setOptionsDelegate: (id<BChatOptionDelegate>) delegate;
 -(id<BChatOptionDelegate>) delegate;
+-(void) setDelegate: (id<BChatOptionDelegate>) delegate;
 -(UIView *) keyboardView;
 -(void) presentView: (UIView *) view;
 -(void) dismissView;

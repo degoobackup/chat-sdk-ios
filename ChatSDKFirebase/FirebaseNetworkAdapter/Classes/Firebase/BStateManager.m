@@ -8,17 +8,16 @@
 
 #import "BStateManager.h"
 
-#import <ChatSDK/ChatCore.h>
-#import "ChatFirebaseAdapter.h"
+#import <ChatSDKFirebase/FirebaseAdapter.h>
 
 @implementation BStateManager
 
 +(void) userOn: (NSString *) entityID {
     
-    id<PUser> user = [[BStorageManager sharedManager].a fetchEntityWithID:entityID withType:bUserEntity];
+    id<PUser> user = [BChatSDK.db fetchEntityWithID:entityID withType:bUserEntity];
     
     NSDictionary * data = @{bHookUserOn_PUser: user};
-    [NM.hook executeHookWithName:bHookUserOn data:data];
+    [BChatSDK.hook executeHookWithName:bHookUserOn data:data];
     
     FIRDatabaseReference * threadsRef = [FIRDatabaseReference userThreadsRef:entityID];
     [threadsRef observeEventType:FIRDataEventTypeChildAdded withBlock:^(FIRDataSnapshot * snapshot) {
@@ -33,6 +32,8 @@
             [thread on];
             [thread messagesOn];
             [thread usersOn];
+            [thread lastMessageOn];
+            [thread metaOn];
         }
     }];
     
@@ -43,8 +44,10 @@
             CCThreadWrapper * thread = [CCThreadWrapper threadWithEntityID:snapshot.key];
             [thread off];
             [thread messagesOff]; // We need to turn the messages off incase we rejoin the thread
+            [thread lastMessageOff];
+            [thread metaOff];
             
-            [NM.core deleteThread:thread.model];
+            [BChatSDK.core deleteThread:thread.model];
         }
     }];
     
@@ -64,12 +67,10 @@
             // TODO: Maybe move this so we only listen to a thread when it's open
             [thread messagesOn];
             [thread usersOn];
+            [thread lastMessageOn];
+            [thread metaOn];
         }
     }];
-    
-    if (NM.push && [NM.push respondsToSelector:@selector(subscribeToPushChannel:)]) {
-        [NM.push subscribeToPushChannel:user.pushChannel];
-    }
     
     for (id<PUserConnection> contact in [user connectionsWithType:bUserConnectionTypeContact]) {
         // Turn the contact on
@@ -77,11 +78,15 @@
         [[CCUserWrapper userWithModel:contactModel] metaOn];
         [[CCUserWrapper userWithModel:contactModel] onlineOn];
     }
+    
+    if (BChatSDK.config.enableMessageModerationTab) {
+        [BChatSDK.moderation on];
+    }
 }
 
 +(void) userOff: (NSString *) entityID {
 
-    id<PUser> user = [[BStorageManager sharedManager].a fetchEntityWithID:entityID withType:bUserEntity];
+    id<PUser> user = [BChatSDK.db fetchEntityWithID:entityID withType:bUserEntity];
     
     FIRDatabaseReference * publicThreadsRef = [FIRDatabaseReference publicThreadsRef];
     [publicThreadsRef removeAllObservers];
@@ -96,7 +101,7 @@
         }
     }
     
-    for (id<PThread> threadModel in [NM.core threadsWithType:bThreadTypePublicGroup]) {
+    for (id<PThread> threadModel in [BChatSDK.core threadsWithType:bThreadTypePublicGroup]) {
         CCThreadWrapper * thread = [CCThreadWrapper threadWithModel:threadModel];
         [thread off];
     }
@@ -108,9 +113,6 @@
         [[CCUserWrapper userWithModel:contactModel] onlineOff];
     }
 
-    if (NM.push && [NM.push respondsToSelector:@selector(unsubscribeToPushChannel:)]) {
-        [NM.push unsubscribeToPushChannel:user.pushChannel];
-    }
 }
 
 @end

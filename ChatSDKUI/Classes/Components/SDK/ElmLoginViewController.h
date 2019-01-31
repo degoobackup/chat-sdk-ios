@@ -10,6 +10,7 @@
 
 @class MBProgressHUD;
 @class RXPromise;
+@class BHook;
 
 @protocol ElmLoginViewDelegate;
 
@@ -17,7 +18,7 @@
     UITapGestureRecognizer * _tapRecognizer;
     NSTimer * _timer;
     MBProgressHUD * _hud;
-    id _internetConnectionObserver;
+    BHook * _internetConnectionHook;
         
 }
 
@@ -34,6 +35,8 @@
 @property (weak, nonatomic) IBOutlet UIButton *twitterButton;
 @property (weak, nonatomic) IBOutlet UIButton *googleButton;
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UIButton *forgotPasswordButton;
+@property (weak, nonatomic) IBOutlet UIButton *termsAndConditionsButton;
 
 @property (nonatomic, readwrite, weak) id<ElmLoginViewDelegate> delegate;
 
@@ -43,5 +46,11 @@
 -(void) hideHUD;
 -(void) hideHUDWithDuration: (float) duration;
 -(void) authenticationFinished;
+
+-(IBAction)loginButtonPressed:(id)sender;
+-(IBAction)registerButtonPressed:(id)sender;
+-(void) handleLoginAttempt: (RXPromise *) promise;
+-(IBAction)termsAndConditionsButtonPressed:(id)sender;
+-(void) hideKeyboard;
 
 @end

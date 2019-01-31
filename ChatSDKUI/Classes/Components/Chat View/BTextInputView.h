@@ -10,7 +10,9 @@
 #import <ChatSDK/PSendBarDelegate.h>
 #import <ChatSDK/PSendBar.h>
 #import <ChatSDK/bChatState.h>
-#import <ChatSDK/ChatUI.h>
+#import <ChatSDK/UI.h>
+
+@class BHook;
 
 @interface BTextInputView : UIView<UITextViewDelegate, PSendBar> {
     UIButton * _optionsButton;
@@ -22,6 +24,10 @@
     
     BOOL _audioEnabled;
     BOOL _micButtonEnabled;
+    NSDate * _recordingStart;
+    BOOL _audioMaxLengthReached;
+    
+    BHook * _internetConnectionHook;
 }
 
 @property (weak, nonatomic, readwrite) id<PSendBarDelegate> sendBarDelegate;
@@ -29,6 +35,7 @@
 // This is a property so we can access it from our mentions view
 @property (nonatomic, readwrite) HKWTextView * textView;
 
+@property (nonatomic, readwrite) NSInteger maxCharacters;
 @property (nonatomic, readwrite) NSInteger maxLines;
 @property (nonatomic, readwrite) NSInteger minLines;
 @property (nonatomic, readwrite) UIButton * optionsButton;
@@ -36,8 +43,9 @@
 @property (nonatomic, readonly) UILabel * placeholderLabel;
 
 -(void) setAudioEnabled: (BOOL) audioEnabled;
--(BOOL) resignFirstResponder;
--(void) becomeFirstResponder;
+-(BOOL) resignTextViewFirstResponder;
+-(void) becomeTextViewFirstResponder;
 -(void) setOptionsButtonHidden: (BOOL) hidden;
+-(void) setMicButtonEnabled: (BOOL) enabled;
 
 @end

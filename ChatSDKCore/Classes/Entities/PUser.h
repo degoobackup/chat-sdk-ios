@@ -8,17 +8,16 @@
 
 #import "BAccountTypes.h"
 
-#import "BUserConnectionType.h"
-#import "PElmUser.h"
-#import "PHasMeta.h"
+#import <ChatSDK/BUserConnectionType.h>
 
 @class RXPromise;
 @protocol PUserConnection;
 @protocol PThread;
 @protocol PUserAccount;
 @protocol PEntity;
+@protocol PElmUser;
 
-@protocol PUser <PEntity, PHasMeta, PElmUser>
+@protocol PUser <PEntity, PElmUser>
 
 /**
  * @brief Sets the user's online status
@@ -83,7 +82,7 @@
 -(void) setPhoneNumber: (NSString *) phoneNumber;
 -(NSString *) phoneNumber;
 
--(NSArray<PThread> *) threads;
+-(NSArray *) threads;
 
 -(int) unreadMessageCount;
 
@@ -93,16 +92,22 @@
 
 -(id<PUser>) model;
 
--(NSArray<PUser> *) contactsWithType: (bUserConnectionType) type;
+-(NSArray *) contactsWithType: (bUserConnectionType) type;
 -(void) addConnection: (id<PUserConnection>) connection;
 -(void) removeConnection: (id<PUserConnection>) connection;
 
--(NSArray<PUserConnection> *) connectionsWithType: (bUserConnectionType) type;
+-(NSArray *) connectionsWithType: (bUserConnectionType) type;
 
 -(BOOL) isMe;
 
-// Needed for CocoaPods install
--(NSDictionary *) metaDictionary;
+-(void) setMeta: (NSDictionary *) meta;
+-(NSDictionary *) meta;
+-(void) setMetaValue: (id) value forKey: (NSString *) key;
+-(void) updateMeta: (NSDictionary *) dict;
+
+@optional
+
+-(void) optimize;
 
 @end
 

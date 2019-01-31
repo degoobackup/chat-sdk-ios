@@ -30,10 +30,13 @@
 @protocol PNearbyUsersHandler;
 @protocol PReadReceiptHandler;
 @protocol PStickerMessageHandler;
+@protocol PFileMessageHandler;
 @protocol PSocialLoginHandler;
 @protocol PHookHandler;
 @protocol PUsersHandler;
-
+@protocol PEncryptionHandler;
+@protocol PInternetConnectivityHandler;
+// Depricated: Use bHookDidLogout (and hook system) instead
 #define bNotificationLogout @"bNLogout"
 
 #define bNotificationMessageAdded @"bNMessageAdded"
@@ -44,6 +47,12 @@
 
 #define bNotificationMessageUpdated @"bNMessageUpdated"
 #define bNotificationMessageUpdatedKeyMessage @"bNMessageUpdatedKeyMessage"
+
+#define bNotificationFlaggedMessageAdded @"bNFlaggedMessageAdded"
+#define bNotificationFlaggedMessageAdded_PMessage @"bNFlaggedMessageAdded_PMessage"
+
+#define bNotificationFlaggedMessageRemoved @"bNFlaggedMessageRemoved"
+#define bNotificationFlaggedMessageRemoved_PMessage @"bNFlaggedMessageRemoved_PMessage"
 
 #define bNotificationUserUpdated @"bNUserUpdated"
 #define bNotificationUserUpdated_PUser @"bNUserUpdated_PUser"
@@ -57,6 +66,10 @@
 
 #define bNotificationThreadUsersUpdated @"bNThreadUsersUpdated"
 #define bNotificationThreadMetaUpdated @"bNThreadMetaUpdated"
+
+#define bNotificationThreadLastMessageUpdated @"bNThreadLastMessageUpdated"
+#define bNotificationThreadLastMessageUpdated_Text @"bNThreadLastMessageUpdated_Text"
+
 
 #define bNotificationReadReceiptUpdated @"bNReadReceiptUpdated"
 #define bNotificationReadReceiptUpdatedKeyMessage @"bNReadReceiptUpdatedKeyMessage"
@@ -93,9 +106,12 @@
 -(id<PNearbyUsersHandler>) nearbyUsers;
 -(id<PReadReceiptHandler>) readReceipt;
 -(id<PStickerMessageHandler>) stickerMessage;
+-(id<PFileMessageHandler>) fileMessage;
 -(id<PSocialLoginHandler>) socialLogin;
 -(id<PHookHandler>) hook;
 -(id<PUsersHandler>) users;
+-(id<PInternetConnectivityHandler>) connectivity;
+-(id<PEncryptionHandler>) encryption;
 -(id) handlerWithName: (NSString *) name;
 
 -(void) setCore: (id<PCoreHandler>) core;
@@ -116,10 +132,13 @@
 -(void) setNearbyUsers: (id<PNearbyUsersHandler>) nearbyUsers;
 -(void) setReadReceipt: (id<PReadReceiptHandler>) readReceipt;
 -(void) setStickerMessage: (id<PStickerMessageHandler>) stickerMessage;
+-(void) setFileMessage: (id<PFileMessageHandler>) fileMessage;
 -(void) setSocialLogin: (id<PSocialLoginHandler>) socialLogin;
 -(void) setHandler: (id) handler withName: (NSString *) name;
 -(void) setHookHandler: (id<PHookHandler>) hook;
 -(void) setUsers: (id<PUsersHandler>) users;
+-(void) setEncryption: (id<PEncryptionHandler>) encryption;
+-(void) setConnectivity: (id<PInternetConnectivityHandler>) connectivity;
 
 @end
 

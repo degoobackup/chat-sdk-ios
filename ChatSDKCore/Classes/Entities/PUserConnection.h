@@ -10,13 +10,12 @@
 #define PUserConnection_h
 
 #import <ChatSDK/bSubscriptionType.h>
-#import <ChatSDK/PHasMeta.h>
 #import <ChatSDK/BUserConnectionType.h>
 
 @protocol PUser;
 @protocol PGroup;
 
-@protocol PUserConnection<NSObject, PHasMeta>
+@protocol PUserConnection<NSObject>
 
 -(NSString *) entityID;
 -(void) setEntityID: (NSString *) entityID;
@@ -27,9 +26,6 @@
 -(void) setType: (NSNumber *) type;
 -(bUserConnectionType) userConnectionType;
 
--(id) metaValueForKey: (NSString *) key;
--(void) setMetaValue: (id) value forKey: (NSString *) key;
-
 -(NSSet *) groups;
 -(void) addGroupsObject: (id<PGroup>) group;
 
@@ -37,6 +33,10 @@
 
 -(void) setSubscriptionType: (NSString *) subscriptionType;
 -(bSubscriptionType) subscriptionType;
+
+-(void) setMeta: (NSDictionary *) meta;
+-(NSDictionary *) meta;
+-(void) setMetaValue: (id) value forKey: (NSString *) key;
 
 @end
 

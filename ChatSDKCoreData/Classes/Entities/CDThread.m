@@ -8,14 +8,13 @@
 
 #import "CDThread.h"
 
-#import <ChatSDK/ChatCore.h>
-#import <ChatSDK/ChatCoreData.h>
+#import <ChatSDK/Core.h>
+#import <ChatSDK/CoreData.h>
 
 @implementation CDThread
 
 -(instancetype) init {
     if((self = [super init])) {
-        [self optimizeMessageProperties];
     }
     return self;
 }
@@ -30,73 +29,68 @@
     return _messagesWorkingList;
 }
 
--(void) resetMessages {
+-(void) clearMessageCache {
     [_messagesWorkingList removeAllObjects];
-    [_messagesWorkingList addObjectsFromArray:[self loadMessagesWithCount:[BChatSDK config].chatMessagesToLoad ascending:NO]];
-    
-//    NSArray * messages = [self orderMessagesByDateDesc:self.allMessages];
-//
-//    for(int i = 0; i < bMessageWorkingListInitialSize; i++) {
-//        if(i < messages.count) {
-//            [_messagesWorkingList addObject:messages[i]];
-//        }
-//        else {
-//            break;
-//        }
-//    }
 }
 
--(NSArray *) loadMessagesWithCount: (int) count ascending: (BOOL) ascending {
+-(void) resetMessages {
+    [_messagesWorkingList removeAllObjects];
+    [_messagesWorkingList addObjectsFromArray:[self loadMessagesWithCount:BChatSDK.config.chatMessagesToLoad ascending:NO]];
+    [self reverse:_messagesWorkingList];
+}
+
+- (void)reverse: (NSMutableArray *) array {
+    if ([array count] <= 1)
+        return;
+    NSUInteger i = 0;
+    NSUInteger j = [array count] - 1;
+    while (i < j) {
+        [array exchangeObjectAtIndex:i
+                  withObjectAtIndex:j];
+        
+        i++;
+        j--;
+    }
+}
+
+-(NSArray *) loadMessagesWithCount: (NSInteger) count ascending: (BOOL) ascending {
     NSFetchRequest * request = [[NSFetchRequest alloc] init];
+    request.includesPendingChanges = YES;
     [request setFetchLimit:count];
     request.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"date" ascending:ascending]];
     NSPredicate * predicate = [NSPredicate predicateWithFormat:@"thread = %@", self];
     
-    NSArray * messages = [[BStorageManager sharedManager].a executeFetchRequest:request
+    NSArray * messages = [BChatSDK.db executeFetchRequest:request
                                                                      entityName:bMessageEntity
                                                                       predicate:predicate];
     
     return messages;
 }
 
-// Adds extra messages to the
 -(NSArray *) loadMoreMessages: (NSInteger) numberOfMessages {
     
     NSInteger count = _messagesWorkingList.count + numberOfMessages;
+    count = MAX(count, BChatSDK.config.chatMessagesToLoad);
+    
     // Get the next batch of messages
     [_messagesWorkingList removeAllObjects];
-    [_messagesWorkingList addObjectsFromArray:[self loadMessagesWithCount:count ascending:YES]];
     
-//    NSArray * allMessages = [self orderMessagesByDateAsc:self.allMessages];
-//
-//    // The endIndex of the last message to add
-//    NSInteger endIndex = allMessages.count - self.messagesWorkingList.count - 1;
-//
-//    NSMutableArray * messages = [NSMutableArray new];
-//
-//    // Loop backwards from the end index adding the messages to the working list
-//    for(NSInteger i = endIndex; i > endIndex - numberOfMessages; i--) {
-//        if(i >= 0) {
-//            [messages addObject:allMessages[i]];
-//        }
-//    }
-//
-//    [_messagesWorkingList addObjectsFromArray:messages];
+    // We want to get the count newest messages so we sent ascending to NO
+    // Then we have to reverse the order of the list...
+    [_messagesWorkingList addObjectsFromArray:[self loadMessagesWithCount:count ascending:NO]];
+    
+    // Now we need to reverse the order of the list
+    [self reverse:_messagesWorkingList];
     
     return _messagesWorkingList;
 }
 
--(void) optimizeMessageProperties {
-    NSArray * messages = self.messagesOrderedByDateAsc;
+-(void) optimize {
+    NSArray * messages = [self loadMessagesWithCount:BChatSDK.config.chatMessagesToLoad ascending:YES];
     for(int i = 0; i < messages.count; i++) {
         CDMessage * message = (CDMessage *) messages[i];
-        if(!message.lastMessage && i > 0) {
-            message.lastMessage = messages[i - 1];
-        }
-        if(![message metaValueForKey:bMessageSenderIsMe]) {
-            [message setMetaValue:@(message.userModel.isMe) forKey:bMessageSenderIsMe];
-        }
-        [message updatePosition];
+        [message clearOptimizationProperties];
+        [message updateOptimizationProperties];
     }
 }
 
@@ -105,14 +99,15 @@
 }
 
 -(BOOL) hasMessages {
-    return self.messagesWorkingList.count > 0;
+    return self.lazyLastMessage != Nil;
 }
 
 -(void) addMessage: (id<PMessage>) message {
-    ((CDMessage *) message).thread = self;
-    
+    CDMessage * cdMessage = (CDMessage *) message;
+    cdMessage.thread = self;
+    self.lastMessage = cdMessage;
+
     [[message lazyLastMessage] updatePosition];
-    
     
     if(![self.messagesWorkingList containsObject:message]) {
         [self.messagesWorkingList addObject:message];
@@ -120,12 +115,19 @@
 }
 
 -(void) removeMessage: (id<PMessage>) message {
-    ((CDMessage *)message).thread = Nil;
-    [[BStorageManager sharedManager].a deleteEntity:message];
+    CDMessage * cdMessage = (CDMessage *) message;
+    cdMessage.thread = Nil;
     
+    [BChatSDK.db deleteEntity:cdMessage];
     if([self.messagesWorkingList containsObject:message]) {
         [self.messagesWorkingList removeObject:message];
     }
+    
+    // This is a bit nasty. Essentially, sometimes the working list will be empty
+    // if we left the thread so we have to repopulate it
+    [self resetMessages];
+    self.lastMessage = self.messagesOrderedByDateDesc.firstObject;
+    [[message lazyLastMessage] updatePosition];
 }
 
 -(void) setDeleted:(NSNumber *)deleted_ {
@@ -154,12 +156,13 @@
     }];
 }
 
--(NSDate *) lastMessageAdded {
-    NSDate * date = self.creationDate;
-    if (self.messages.count) {
-        date = ((id<PMessage>)self.messagesOrderedByDateDesc.firstObject).date;
+-(CDMessage *) lazyLastMessage {
+    if (self.lastMessage) {
+        return self.lastMessage;
     }
-    return date;
+    else {
+        return self.messagesOrderedByDateDesc.firstObject;
+    }
 }
 
 -(NSString *) displayName {
@@ -181,7 +184,7 @@
     NSString * name = @"";
     
     for (id<PUser> user in self.users) {
-        if (![user isEqual:NM.currentUser]) {
+        if (![user isEqual:BChatSDK.currentUser]) {
             if (user.name.length) {
                 name = [name stringByAppendingFormat:@"%@, ", user.name];
             }
@@ -197,13 +200,17 @@
 -(void) markRead {
     for(id<PMessage> message in self.messages) {
         message.read = @YES;
+        
+        // TODO: Should we have this here? Maybe this gets called too soon
+        // but it's a good backup in case the app closes before we save
+        message.delivered = @YES;
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:bNotificationThreadRead object:Nil];
 }
 
 -(int) unreadMessageCount {
     int i = 0;
-    for (id<PMessage> message in self.messages) {
+    for (id<PMessage> message in _messagesWorkingList) {
         if (!message.read.boolValue) {
             i++;
         }
@@ -217,7 +224,7 @@
 
 -(void) addUser: (id<PUser>) user {
     if ([user isKindOfClass:[CDUser class]]) {
-        if (![self.users containsObject:user]) {
+        if (![self.users containsObject:(CDUser *)user]) {
             [self addUsersObject:(CDUser *)user];
         }
     }
@@ -225,14 +232,14 @@
 
 - (void)removeUser:(id<PUser>) user {
     if ([user isKindOfClass:[CDUser class]]) {
-        if ([self.users containsObject:user]) {
+        if ([self.users containsObject:(CDUser *)user]) {
             [self removeUsersObject:(CDUser *) user];
         }
     }
 }
 
 -(id<PUser>) otherUser {
-    id<PUser> currentUser = NM.currentUser;
+    id<PUser> currentUser = BChatSDK.currentUser;
     if (self.type.intValue == bThreadType1to1 || self.users.count == 2) {
         for (id<PUser> user in self.users) {
             if (![user isEqual:currentUser]) {
@@ -243,19 +250,30 @@
     return Nil;
 }
 
+-(void) updateMeta: (NSDictionary *) dict {
+    if (!self.meta) {
+        self.meta = @{};
+    }
+    self.meta = [self.meta updateMetaDict:dict];
+}
+
+-(void) setMetaValue: (id) value forKey: (NSString *) key {
+    [self updateMeta:@{key: value ? value : @""}];
+}
+
 // TODO: Move this to UI module
 - (UIImage *)imageForThread {
     
     NSMutableArray * users = [NSMutableArray arrayWithArray:self.users.allObjects];
     
     // Remove the current user from the array
-    [users removeObject:NM.currentUser];
+    [users removeObject:BChatSDK.currentUser];
     
     // Create a temporary array as we cannot loop through an array and remove users
     NSMutableArray * tempUsers = [NSMutableArray arrayWithArray:users];
     
     // We want to remove any users who have the automatic profile picture
-    for (<PUser> user in tempUsers) {
+    for (id<PUser> user in tempUsers) {
         
         // Check if the user picture has been uploaded
         if (!user.thumbnail) {
@@ -268,10 +286,10 @@
         
         // Check how many users are in the conversation
         if (self.type.intValue & bThreadFilterPublic) {
-            return [NSBundle imageNamed:bDefaultPublicGroupImage framework:@"ChatSDK" bundle:@"ChatUI"];
+            return BChatSDK.config.defaultGroupChatAvatar;
         }
         else {
-            return [BChatSDK config].defaultBlankAvatar;
+            return BChatSDK.config.defaultBlankAvatar;
         }
     }
     else if (users.count == 1) {
@@ -282,7 +300,7 @@
     else {
         
         // When we get the user thumbnail image we make sure it is the size we want so resize it to be 100 x 100
-        UIImage * image1 = [[UIImage imageWithData:((<PUser>)users.firstObject).thumbnail] resizeImageToSize:CGSizeMake(100, 100)];
+        UIImage * image1 = [[UIImage imageWithData:((id<PUser>)users.firstObject).thumbnail] resizeImageToSize:CGSizeMake(100, 100)];
         
         // Then crop the image
         image1 = [image1 croppedImage:CGRectMake(25, 0, 49, 100)];
@@ -291,7 +309,7 @@
         if (users.count == 2) {
             
             // When we get the user thumbnail image we make sure it is the size we want so resize it to be 100 x 100
-            UIImage * image2 = [[UIImage imageWithData:((<PUser>)users.lastObject).thumbnail] resizeImageToSize:CGSizeMake(100, 100)];
+            UIImage * image2 = [[UIImage imageWithData:((id<PUser>)users.lastObject).thumbnail] resizeImageToSize:CGSizeMake(100, 100)];
             
             // Then crop the image
             image2 = [image2 croppedImage:CGRectMake(25, 0, 49, 100)];
@@ -305,8 +323,8 @@
         else {
             
             // Thumbnails done by using parse change
-            UIImage * image2 = [UIImage imageWithData:((<PUser>)users[1]).thumbnail];
-            UIImage * image3 = [UIImage imageWithData:((<PUser>)users[2]).thumbnail];
+            UIImage * image2 = [UIImage imageWithData:((id<PUser>)users[1]).thumbnail];
+            UIImage * image3 = [UIImage imageWithData:((id<PUser>)users[2]).thumbnail];
             
             // Combine the images
             UIGraphicsBeginImageContextWithOptions(CGSizeMake(100, 100), NO, 0.0);
@@ -325,12 +343,13 @@
 }
 
 -(NSDate *) orderDate {
-    id<PMessage> message = [self messagesOrderedByDateDesc].firstObject;
+    id<PMessage> message = self.lazyLastMessage;
     if (message) {
         return message.date;
     }
-    return self.creationDate;
+    else {
+        return self.creationDate;
+    }
 }
-
 
 @end

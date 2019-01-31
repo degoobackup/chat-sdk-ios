@@ -17,8 +17,8 @@
 
 -(instancetype) initWithMessages: (NSArray *) messages;
 -(NSString *) title;
--(id<PElmMessage>) messageForRow: (int) row;
--(int) rowCount;
+-(id<PElmMessage>) messageForRow: (NSInteger) row;
+-(NSInteger) rowCount;
 -(void) addMessage: (id<PElmMessage>) message;
 -(UIView *) view;
 

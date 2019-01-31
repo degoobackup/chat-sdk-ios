@@ -13,6 +13,7 @@
 
 @class BPrivateThreadsViewController;
 @class BPublicThreadsViewController;
+@class BFlaggedMessagesViewController;
 @class BContactsViewController;
 @class UIViewController;
 @class BFriendsListViewController;
@@ -24,10 +25,15 @@
 
 @interface BDefaultInterfaceAdapter : NSObject<PInterfaceFacade> {
     UIViewController * _privateThreadsViewController;
+    UIViewController * _publicThreadsViewController;
     id<PChatOptionsHandler> _chatOptionsHandler;
     NSMutableArray * _additionalChatOptions;
     NSMutableArray * _additionalTabBarViewControllers;
     NSMutableDictionary * _additionalSearchViewControllers;
+    
+    // An array of arrays. Each sub array contains @[(Class) class, (NSNumber *) mesasageType]
+    NSMutableArray * _customMessageCellTypes;
+    BOOL _showLocalNotifications;
 }
 
 @end

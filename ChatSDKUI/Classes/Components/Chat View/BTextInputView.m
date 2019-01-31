@@ -7,9 +7,9 @@
 //
 
 #import "BTextInputView.h"
-#import <ChatSDK/ChatCore.h>
+#import <ChatSDK/Core.h>
 
-#define bMargin 4.0
+#define bMargin 8.0
 
 // The amount of padding (above + below) the text
 // i.e. textView height = text height + padding
@@ -18,11 +18,12 @@
 #define bFontSize 19
 #define bMaxLines 5
 #define bMinLines 1
+#define bMaxCharacters 0
 
 @implementation BTextInputView
 
 @synthesize textView = _textView;
-@synthesize maxLines, minLines;
+@synthesize maxLines, minLines, maxCharacters;
 @synthesize sendBarDelegate = _sendBarDelegate;
 @synthesize optionsButton = _optionsButton;
 @synthesize sendButton = _sendButton;
@@ -38,6 +39,7 @@
         // Decide how many lines the message should have
         minLines = bMinLines;
         maxLines = bMaxLines;
+        maxCharacters = bMaxCharacters;
         
         // Set the text color
         _placeholderColor = [UIColor darkGrayColor];
@@ -58,8 +60,8 @@
         _sendButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
         [self addSubview: _sendButton];
         
-        [_optionsButton setImage:[NSBundle chatUIImageNamed:@"icn_24_options.png"] forState:UIControlStateNormal];
-        [_optionsButton setImage:[NSBundle chatUIImageNamed:@"icn_24_keyboard.png"] forState:UIControlStateSelected];
+        [_optionsButton setImage:[NSBundle uiImageNamed:@"icn_24_options.png"] forState:UIControlStateNormal];
+        [_optionsButton setImage:[NSBundle uiImageNamed:@"icn_24_keyboard.png"] forState:UIControlStateSelected];
         
         [_optionsButton addTarget:self action:@selector(optionsButtonPressed) forControlEvents:UIControlEventTouchUpInside];
         
@@ -94,7 +96,7 @@
         _optionsButton.keepHeight.equal = 24;
         
         // If the user has no chat options available then remove the chat option button width
-        _optionsButton.keepWidth.equal = [BInterfaceManager sharedManager].a.chatOptions.count ? 24 : 0;
+        _optionsButton.keepWidth.equal = BChatSDK.ui.chatOptions.count ? 24 : 0;
         
         _optionsButton.translatesAutoresizingMaskIntoConstraints = NO;
         
@@ -126,15 +128,15 @@
         
         [self setFont:[UIFont systemFontOfSize:bFontSize]];
         
-        // Check this
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateInterfaceForReachabilityStateChange) name:kReachabilityChangedNotification object:Nil];
+        __weak __typeof__(self) weakSelf = self;
+        _internetConnectionHook = [BHook hook:^(NSDictionary * data) {
+            __typeof__(self) strongSelf = weakSelf;
+            [strongSelf updateInterfaceForReachabilityStateChange];
+        }];
+        [BChatSDK.hook addHook:_internetConnectionHook withName:bHookInternetConnectivityChanged];
         
         [self updateInterfaceForReachabilityStateChange];
         
-        CGSize mainViewSize = self.bounds.size;
-        CGFloat borderWidth = 0.5;
-        UIView * topView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, mainViewSize.width, borderWidth)];
-
         UIView * topMarginView = [[UIView alloc] initWithFrame:CGRectZero];
         topMarginView.backgroundColor = [UIColor lightGrayColor];
         
@@ -151,7 +153,7 @@
 }
 
 -(void) updateInterfaceForReachabilityStateChange {
-    BOOL connected = [Reachability reachabilityForInternetConnection].isReachable;
+    BOOL connected = BChatSDK.connectivity.isConnected;
     _sendButton.enabled = connected;
     _optionsButton.enabled = connected;
 }
@@ -162,10 +164,15 @@
 }
 
 -(void) setMicButtonEnabled: (BOOL) enabled {
+    [self setMicButtonEnabled:enabled sendButtonEnabled:NO];
+}
+
+-(void) setMicButtonEnabled: (BOOL) enabled sendButtonEnabled: (BOOL) sendButtonEnabled {
     _micButtonEnabled = enabled;
+    _sendButton.enabled = sendButtonEnabled;
     if (enabled) {
         [_sendButton setTitle:Nil forState:UIControlStateNormal];
-        [_sendButton setImage:[NSBundle chatUIImageNamed: @"icn_24_mic.png"]
+        [_sendButton setImage:[NSBundle uiImageNamed: @"icn_24_mic.png"]
                      forState:UIControlStateNormal];
     }
     else {
@@ -178,8 +185,12 @@
 
 -(void) sendButtonPressed {
     
-    [_sendBarDelegate.view hideAllToasts];
-    [self cancelRecordingToastTimer];
+    if (_audioMaxLengthReached) {
+        _audioMaxLengthReached = NO;
+        return;
+    }
+
+    [self stopRecording];
 
     if (!_micButtonEnabled) {
         
@@ -195,18 +206,7 @@
         [self textViewDidChange:_textView];
     }
     else {
-        
-        // This is where the button is released so we want to finish recording and send
-        if (_sendBarDelegate && [_sendBarDelegate respondsToSelector:@selector(sendAudioMessage:duration:)]) {
-            [[BAudioManager sharedManager] finishRecording];
-            
-            // Return the recording url and duration in an array
-            NSURL * audioURL = [BAudioManager sharedManager].recorder.url;
-            NSData * audioData = [NSData dataWithContentsOfURL:audioURL];
-            
-            [_sendBarDelegate sendAudioMessage: audioData
-                              duration: [BAudioManager sharedManager].recordingLength];
-        }
+        [self sendAudioMessage];
     }
 }
 
@@ -218,28 +218,88 @@
                                                                 target:self
                                                               selector:@selector(showRecordingToast)
                                                               userInfo:Nil
-                                                               repeats:NO];
+                                                               repeats:YES];
+        _recordingStart = [NSDate new];
+        [_placeholderLabel setText:[NSBundle t: bSlideToCancel]];
+    }
+}
+
+-(void) sendAudioMessage {
+    // This is where the button is released so we want to finish recording and send
+    if (_sendBarDelegate && [_sendBarDelegate respondsToSelector:@selector(sendAudioMessage:duration:)]) {
+        
+        // Return the recording url and duration in an array
+        NSURL * audioURL = [BAudioManager sharedManager].recorder.url;
+        NSData * audioData = [NSData dataWithContentsOfURL:audioURL];
+        
+        [_sendBarDelegate sendAudioMessage: audioData
+                                  duration: [BAudioManager sharedManager].recordingLength];
     }
 }
 
 -(void) showRecordingToast {
-    [_sendBarDelegate.view makeToast:[NSBundle t:bRecording]
-                            duration:100
-                            position:[NSValue valueWithCGPoint: CGPointMake(_sendBarDelegate.view.frame.size.width / 2.0, _sendBarDelegate.view.frame.size.height - 120)]];
+    NSString * text = [NSBundle t:bRecording];
+    
+    int remainingTime = BChatSDK.config.audioMessageMaxLengthSeconds + [_recordingStart timeIntervalSinceNow];
+    if (remainingTime <= 10) {
+        text = [NSString stringWithFormat:[NSBundle t: bSecondsRemaining_], remainingTime];
+    }
+    if (remainingTime <= 0) {
+        _audioMaxLengthReached = YES;
+        [self stopRecording];
+        [self presentAlertView];
+    }
+    [_sendBarDelegate.view makeToast:text
+                            duration:0.7
+                            position:[NSValue valueWithCGPoint: CGPointMake(_sendBarDelegate.view.frame.size.width / 2.0, self.frame.origin.y - self.frame.size.height - 20)]];
+}
+
+-(void) stopRecording {
+    [[BAudioManager sharedManager] finishRecording];
+    [_sendBarDelegate.view hideAllToasts];
+    [_placeholderLabel setText:[NSBundle t:bWriteSomething]];
+    [self cancelRecordingToastTimer];
+}
+
+-(void) presentAlertView {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[NSBundle t:bAudioLengthLimitReached]
+                                                                   message:[NSBundle t:bSendOrDiscardRecording]
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction *submit = [UIAlertAction actionWithTitle:[NSBundle t:bSend] style:UIAlertActionStyleDefault
+                                                   handler:^(UIAlertAction * action) {
+                                                       [self sendAudioMessage];
+                                                   }];
+    
+    UIAlertAction * cancel = [UIAlertAction actionWithTitle:[NSBundle t:bCancel] style:UIAlertActionStyleCancel handler:^(UIAlertAction * action) {
+    }];
+    
+    [alert addAction:submit];
+    [alert addAction:cancel];
+    
+    [self.sendBarDelegate.viewController presentViewController:alert animated:YES completion:Nil];
+
 }
 
 -(void) cancelRecordingToastTimer {
     if(_recordingToastTimer) {
         [_recordingToastTimer invalidate];
         _recordingToastTimer = Nil;
+        _recordingStart = Nil;
     }
 }
 
 // If the user touches up off the button we cancel the recording
 - (void)sendButtonCancelled {
+    [_sendBarDelegate.view hideAllToasts];
+    [_placeholderLabel setText:[NSBundle t:bWriteSomething]];
+    CSToastStyle * style = [[CSToastStyle alloc] initWithDefaultStyle];
+    style.backgroundColor = [UIColor redColor];
+    [_sendBarDelegate.view makeToast:[NSBundle t:bCancelled]
+                            duration:1
+                            position:[NSValue valueWithCGPoint: CGPointMake(_sendBarDelegate.view.frame.size.width / 2.0, self.frame.origin.y - self.frame.size.height - 20)] style:style];
     [self cancelRecordingToastTimer];
     [[BAudioManager sharedManager] finishRecording];
-    [_sendBarDelegate.view hideAllToasts];
 }
 
 -(void) optionsButtonPressed {
@@ -278,7 +338,8 @@
 }
 
 -(float) getTextHeight: (NSString *) text {
-    return [text boundingRectWithSize:CGSizeMake(_textView.contentSize.width - 1, CGFLOAT_MAX)
+    NSString * nonBlankText = [text stringByReplacingOccurrencesOfString:@" " withString:@"_"];
+    return [nonBlankText boundingRectWithSize:CGSizeMake(_textView.contentSize.width - 1, CGFLOAT_MAX)
                                    options:NSStringDrawingUsesLineFragmentOrigin
                                 attributes:@{NSFontAttributeName: _textView.font}
                                    context:Nil].size.height;
@@ -294,6 +355,10 @@
     // Workout if adding this text will cause the box to become too long
     NSString * newText = [textView.text stringByAppendingString:text];
     
+    if(maxCharacters > 0 && newText.length > maxCharacters) {
+        return NO;
+     }
+    
     NSInteger numberOfLines = [self getTextHeight:newText]/textView.font.lineHeight;
     numberOfLines = MAX(numberOfLines, [newText componentsSeparatedByString:@"\n"].count);
     
@@ -308,7 +373,7 @@
     
     // If there is text or if the audio is turned off
     if (textView.text.length || !_audioEnabled) {
-        [self setMicButtonEnabled:NO];
+        [self setMicButtonEnabled:NO sendButtonEnabled:textView.text.length];
     }
     else {
         [self setMicButtonEnabled:YES];
@@ -340,13 +405,17 @@
     if(fabsf(delta) > 0.01) {
         [self.superview setNeedsUpdateConstraints];
         
+        __weak __typeof__(self) weakSelf = self;
+        
         [UIView animateWithDuration:0.2 animations:^{
+            __typeof__(self) strongSelf = weakSelf;
+            
             //[self setNeedsUpdateConstraints];
-            [self.superview layoutIfNeeded];
-            [_textView setContentOffset:CGPointZero animated:NO];
+            [strongSelf.superview layoutIfNeeded];
+            [strongSelf->_textView setContentOffset:CGPointZero animated:NO];
 
-            if(_sendBarDelegate != Nil) {
-                [_sendBarDelegate didResizeTextInputViewWithDelta:delta];
+            if(strongSelf->_sendBarDelegate != Nil) {
+                [strongSelf->_sendBarDelegate didResizeTextInputViewWithDelta:delta];
             }
         }];
     }
@@ -408,11 +477,13 @@
     _optionsButton.keepWidth.equal = hidden ? 0 : 24;
 }
 
--(BOOL) resignFirstResponder {
+-(BOOL) resignTextViewFirstResponder {
+//    [super resignFirstResponder];
     return [_textView resignFirstResponder];
 }
 
--(void) becomeFirstResponder {
+-(void) becomeTextViewFirstResponder {
+//    [super becomeFirstResponder];
     [_textView becomeFirstResponder];
 }
 

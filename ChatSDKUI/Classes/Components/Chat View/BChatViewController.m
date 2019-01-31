@@ -8,8 +8,8 @@
 
 #import "BChatViewController.h"
 
-#import <ChatSDK/ChatCore.h>
-#import <ChatSDK/ChatUI.h>
+#import <ChatSDK/Core.h>
+#import <ChatSDK/UI.h>
 
 @implementation BChatViewController
 
@@ -33,6 +33,9 @@
 -(void) viewDidLoad {
     [super viewDidLoad];
     
+    [_sendBarView setMaxLines:BChatSDK.config.textInputViewMaxLines];
+    [_sendBarView setMaxCharacters:BChatSDK.config.textInputViewMaxCharacters];
+
     // Set the title
     [self updateTitle];
     
@@ -41,21 +44,21 @@
     
     // Setup last online
     if (_thread.type.intValue == bThreadType1to1) {
-        if(NM.lastOnline) {
-            [NM.lastOnline getLastOnlineForUser:_thread.otherUser].thenOnMain(^id(NSDate * date) {
-                [self setSubtitle:date.lastSeenTimeAgo];
-                
+        if(BChatSDK.lastOnline) {
+            __weak __typeof__(self) weakSelf = self;
+            [BChatSDK.lastOnline getLastOnlineForUser:_thread.otherUser].thenOnMain(^id(NSDate * date) {
+                [weakSelf setSubtitle:date.lastSeenTimeAgo];
                 return Nil;
             }, Nil);
         }
     }
     
-    [super setAudioEnabled: NM.audioMessage != Nil];
+    [super setAudioEnabled: BChatSDK.audioMessage != Nil];
 }
 
 -(void) updateSubtitle {
     
-    if ([BSettingsManager userChatInfoEnabled]) {
+    if (BChatSDK.config.userChatInfoEnabled) {
         [self setSubtitle:[NSBundle t: bTapHereForContactInfo]];
     }
     
@@ -65,15 +68,14 @@
 }
 
 -(void) addObservers {
-    [self removeObservers];
-    
     [super addObservers];
     
-    id<PUser> currentUserModel = NM.currentUser;
+    id<PUser> currentUserModel = BChatSDK.currentUser;
     
+    __weak __typeof__(self) weakSelf = self;
     [_notificationList add:[[NSNotificationCenter defaultCenter] addObserverForName:bNotificationReadReceiptUpdated object:Nil queue:Nil usingBlock:^(NSNotification * notification) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self updateMessages];
+            [weakSelf updateMessages];
         });
     }]];
     
@@ -89,11 +91,11 @@
                 }
             }
             else {
-                [NM.readReceipt markRead:_thread.model];
+                [BChatSDK.readReceipt markRead:_thread.model];
             }
             messageModel.delivered = @YES;
             
-            [self updateMessages];
+            [weakSelf updateMessages];
         });
     }]];
     
@@ -103,7 +105,7 @@
                                                                             usingBlock:^(NSNotification * notification) {
                                                                                 dispatch_async(dispatch_get_main_queue(), ^{
                                                                                     dispatch_async(dispatch_get_main_queue(), ^{
-                                                                                        [self updateMessages];
+                                                                                        [weakSelf updateMessages];
                                                                                     });
                                                                                 });
     }]];
@@ -114,7 +116,10 @@
                                                                        queue:Nil
                                                                   usingBlock:^(NSNotification * notification) {
                                                                       dispatch_async(dispatch_get_main_queue(), ^{
-                                                                          [self updateMessages];
+                                                                          id<PUser> user = notification.userInfo[bNotificationUserUpdated_PUser];
+                                                                          if (user && [_thread.users containsObject:user]) {
+                                                                              [weakSelf updateMessages];
+                                                                          }
                                                                       });
     }]];
     
@@ -125,7 +130,7 @@
                                                                         dispatch_async(dispatch_get_main_queue(), ^{
                                                                             id<PThread> thread = notification.userInfo[bNotificationTypingStateChangedKeyThread];
                                                                             if ([thread isEqual: _thread]) {
-                                                                                [self startTypingWithMessage:notification.userInfo[bNotificationTypingStateChangedKeyMessage]];
+                                                                                [weakSelf startTypingWithMessage:notification.userInfo[bNotificationTypingStateChangedKeyMessage]];
                                                                             }
                                                                         });
     }]];
@@ -136,8 +141,8 @@
                                                                               queue:Nil
                                                                          usingBlock:^(NSNotification * notification) {
                                                                              dispatch_async(dispatch_get_main_queue(), ^{
-                                                                                 [self updateSubtitle];
-                                                                                 [self updateTitle];
+                                                                                 [weakSelf updateSubtitle];
+                                                                                 [weakSelf updateTitle];
                                                                             });
     }]];
     
@@ -147,14 +152,9 @@
     [self setTitle:_thread.displayName ? _thread.displayName : [NSBundle t: bDefaultThreadName]];
 }
 
--(void) removeObservers {
-    [super removeObservers];
-    
-    [_notificationList dispose];
-}
-
 -(void) viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [BChatSDK.ui setShowLocalNotifications:NO];
     [self updateMessages];
 }
 
@@ -163,11 +163,16 @@
     
     _usersViewLoaded = NO;
     
+    [self addUserToPublicThreadIfNecessary];
+    
+}
+
+-(void) addUserToPublicThreadIfNecessary {
     // For public threads we add the user when we view the thread
     // TODO: This is called multiple times... maybe move it to view did load
     if (_thread.type.intValue & bThreadFilterPublic) {
-        id<PUser> user = NM.currentUser;
-        [NM.core addUsers:@[user] toThread:_thread];
+        id<PUser> user = BChatSDK.currentUser;
+        [BChatSDK.core addUsers:@[user] toThread:_thread];
     }
     
 }
@@ -177,57 +182,60 @@
     
     // Remove the user from the thread
     if (_thread.type.intValue & bThreadFilterPublic && !_usersViewLoaded) {
-        id<PUser> currentUser = NM.currentUser;
-        [NM.core removeUsers:@[currentUser] fromThread:_thread];
+        id<PUser> currentUser = BChatSDK.currentUser;
+        [BChatSDK.core removeUsers:@[currentUser] fromThread:_thread];
     }
     
+    //[BChatSDK.core saveToStore];
     
 }
 
 -(RXPromise *) handleMessageSend: (RXPromise *) promise {
     [self updateMessages];
-    [NM.core save];
-    //[self reloadData];
+    [BChatSDK.core save];
     return promise;
 }
 
 -(RXPromise *) sendText: (NSString *) text withMeta:(NSDictionary *)meta {
-    return [self handleMessageSend:[NM.core sendMessageWithText:text withThreadEntityID:_thread.entityID withMetaData:meta]];
+    return [self handleMessageSend:[BChatSDK.core sendMessageWithText:text
+                                             withThreadEntityID:_thread.entityID
+                                                   withMetaData:meta]];
 }
 
 -(RXPromise *) sendText: (NSString *) text {
-    return [self handleMessageSend:[NM.core sendMessageWithText:text withThreadEntityID:_thread.entityID]];
+    return [self handleMessageSend:[BChatSDK.core sendMessageWithText:text
+                                             withThreadEntityID:_thread.entityID]];
 }
 
 -(RXPromise *) sendImage: (UIImage *) image {
-    if (NM.imageMessage) {
-        return [self handleMessageSend:[NM.imageMessage sendMessageWithImage:image
-                                                                                         withThreadEntityID:_thread.entityID]];
+    if (BChatSDK.imageMessage) {
+        return [self handleMessageSend:[BChatSDK.imageMessage sendMessageWithImage:image
+                                                          withThreadEntityID:_thread.entityID]];
     }
     return [RXPromise rejectWithReasonDomain:bErrorTitle code:0 description:bImageMessagesNotSupported];
 }
 
 -(RXPromise *) sendLocation: (CLLocation *) location {
-    if (NM.locationMessage) {
-        return [self handleMessageSend:[NM.locationMessage sendMessageWithLocation:location
-                                                                                               withThreadEntityID:_thread.entityID]];
+    if (BChatSDK.locationMessage) {
+        return [self handleMessageSend:[BChatSDK.locationMessage sendMessageWithLocation:location
+                                                                withThreadEntityID:_thread.entityID]];
     }
     return [RXPromise rejectWithReasonDomain:bErrorTitle code:0 description:bLocationMessagesNotSupported];
 }
 
 -(RXPromise *) sendAudio: (NSData *) audio withDuration: (double) duration {
-    if (NM.audioMessage) {
-        return [self handleMessageSend:[NM.audioMessage sendMessageWithAudio:audio
-                                                                                                   duration:duration
-                                                                                         withThreadEntityID:_thread.entityID]];
+    if (BChatSDK.audioMessage) {
+        return [self handleMessageSend:[BChatSDK.audioMessage sendMessageWithAudio:audio
+                                                                    duration:duration
+                                                          withThreadEntityID:_thread.entityID]];
     }
     
     return [RXPromise rejectWithReasonDomain:bErrorTitle code:0 description:bAudioMessagesNotSupported];
 }
 
 -(RXPromise *) sendVideo: (NSData *) video withCoverImage: (UIImage *) coverImage {
-    if (NM.videoMessage) {
-        return [self handleMessageSend:[NM.videoMessage sendMessageWithVideo:video
+    if (BChatSDK.videoMessage) {
+        return [self handleMessageSend:[BChatSDK.videoMessage sendMessageWithVideo:video
                                                                   coverImage:coverImage
                                                           withThreadEntityID:_thread.entityID]];
     }
@@ -235,41 +243,49 @@
 }
 
 -(RXPromise *) sendSystemMessage: (NSString *) text {
-    [NM.core sendLocalSystemMessageWithText:text withThreadEntityID:_thread.entityID];
+    [BChatSDK.core sendLocalSystemMessageWithText:text withThreadEntityID:_thread.entityID];
     return [RXPromise resolveWithResult:Nil];
 }
 
 -(RXPromise *) sendSticker: (NSString *) name {
-    if([BNetworkManager sharedManager].a.stickerMessage) {
-        return [self handleMessageSend:[[BNetworkManager sharedManager].a.stickerMessage sendMessageWithSticker:name
+    if(BChatSDK.stickerMessage) {
+        return [self handleMessageSend:[BChatSDK.stickerMessage sendMessageWithSticker:name
                                                                                              withThreadEntityID:_thread.entityID]];
     }
     return [RXPromise rejectWithReasonDomain:bErrorTitle code:0 description:bStickerMessagesNotSupported];
 }
 
+-(RXPromise *) sendFile: (NSDictionary *) file {
+    if(BChatSDK.fileMessage) {
+        return [self handleMessageSend:[BChatSDK.fileMessage sendMessageWithFile:file andThreadEntityID:_thread.entityID]];
+    }
+    return [RXPromise rejectWithReasonDomain:bErrorTitle code:0 description:bFileMessagesNotSupported];
+}
+
 -(RXPromise *) setMessageFlagged: (id<PElmMessage>) message isFlagged: (BOOL) flagged {
     if (flagged) {
-        return [NM.moderation unflagMessage:message.entityID];
+        return [BChatSDK.moderation unflagMessage:message.entityID];
     }
     else {
-        return [NM.moderation flagMessage:message.entityID];
+        return [BChatSDK.moderation flagMessage:message.entityID];
     }
     
 }
 
 -(RXPromise *) setChatState: (bChatState) state {
-    return [NM.typingIndicator setChatState: state forThread: _thread];
+    return [BChatSDK.typingIndicator setChatState: state forThread: _thread];
 }
 
 // Do you want to enable the audio mic?
 -(BOOL) audioEnabled {
-    return NM.audioMessage != Nil;
+    return BChatSDK.audioMessage != Nil;
 }
 
 // You can pull more messages from the server and add them to the thread object
 -(RXPromise *) loadMoreMessages {
-    return [NM.core loadMoreMessagesForThread:_thread].thenOnMain(^id(NSArray * messages) {
-        [self updateMessages];
+    __weak __typeof__(self) weakSelf = self;
+    return [BChatSDK.core loadMoreMessagesForThread:_thread].thenOnMain(^id(NSArray * messages) {
+        [weakSelf updateMessages];
         return Nil;
     },^id(NSError * error) {
         return Nil;
@@ -281,19 +297,27 @@
     [self setMessages:self.messages];
 }
 
+// TODO: We could make this more efficient
 -(NSArray *) messages {
     if (!_messageCache || !_messageCache.count || _messageCacheDirty) {
         [_messageCache removeAllObjects];
-        
+
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+//        NSCalendar *calendar = [NSCalendar currentCalendar];
+        dateFormatter.dateFormat = @"ddMMyyyy";
         // Don't load any additional messages - we will already load the
         // number of messages as defined the config.chatMessagesToLoad property
         NSArray * messages = [_thread loadMoreMessages:0];
         NSDate * lastMessageDate;
         BMessageSection * section;
         
-        for (id<PMessage> message in messages) {
+        for (id<PElmMessage> message in messages) {
             // This is a new day
-            if (!lastMessageDate || abs([message.date daysFrom:lastMessageDate]) > 0) {
+            // It is a new day if either the calendar date has changed
+            NSString * lastDateString = [dateFormatter stringFromDate:lastMessageDate];
+            NSString * dateString = [dateFormatter stringFromDate:message.date];
+            
+            if (!lastMessageDate || ![dateString isEqual:lastDateString]) {
                 section = [[BMessageSection alloc] init];
                 [_messageCache addObject:section];
             }
@@ -314,8 +338,8 @@
 }
 
 -(void) markRead {
-    if(NM.readReceipt) {
-        [NM.readReceipt markRead:_thread];
+    if(BChatSDK.readReceipt) {
+        [BChatSDK.readReceipt markRead:_thread];
     }
     else {
         [_thread markRead];
@@ -328,19 +352,7 @@
 
 -(NSMutableArray *) customCellTypes {
     NSMutableArray * types = [NSMutableArray new];
-    
-    if(NM.audioMessage) {
-        [types addObject: @[NM.audioMessage.messageCellClass, @(bMessageTypeAudio)]];
-    }
-
-    if(NM.videoMessage) {
-        [types addObject: @[NM.videoMessage.messageCellClass, @(bMessageTypeVideo)]];
-    }
-    
-    if([BNetworkManager sharedManager].a.stickerMessage) {
-        [types addObject: @[NM.stickerMessage.messageCellClass, @(bMessageTypeSticker)]];
-    }
-
+        
     return types;
 }
 
@@ -348,14 +360,17 @@
 -(void) navigationBarTapped {
     _usersViewLoaded = YES;
     NSMutableArray * users = [NSMutableArray arrayWithArray: _thread.model.users.allObjects];
-    [users removeObject:NM.currentUser];
+    [users removeObject:BChatSDK.currentUser];
     
-    UIViewController * vc = [[BInterfaceManager sharedManager].a usersViewControllerWithThread:_thread
+    UINavigationController * nvc = [BChatSDK.ui usersViewNavigationControllerWithThread:_thread
                                                                     parentNavigationController:self.navigationController];
     
-    UINavigationController * nvc = [[UINavigationController alloc] initWithRootViewController:vc];
     [self presentViewController:nvc animated:YES completion:nil];
     
+}
+
+-(void) dealloc {
+    [_thread clearMessageCache];
 }
 
 

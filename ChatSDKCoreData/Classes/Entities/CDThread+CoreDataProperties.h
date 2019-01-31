@@ -17,7 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nullable, nonatomic, retain) NSString *apiKey;
 @property (nullable, nonatomic, retain) NSDate *creationDate;
-@property (nullable, nonatomic, retain) NSString *creatorEntityID;
 @property (nullable, nonatomic, retain) NSNumber *deleted_;
 @property (nullable, nonatomic, retain) NSNumber *dirty;
 @property (nullable, nonatomic, retain) NSString *entityID;
@@ -30,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, retain) CDUser *creator;
 @property (nullable, nonatomic, retain) NSSet<CDMessage *> *messages;
 @property (nullable, nonatomic, retain) NSSet<CDUser *> *users;
+@property (nullable, nonatomic, retain) CDMessage * lastMessage;
 
 @end
 

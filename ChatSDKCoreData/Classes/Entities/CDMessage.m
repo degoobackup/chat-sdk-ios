@@ -8,8 +8,8 @@
 
 #import "CDMessage.h"
 
-#import <ChatSDK/ChatCoreData.h>
-#import <ChatSDK/ChatCore.h>
+#import <ChatSDK/CoreData.h>
+#import <ChatSDK/Core.h>
 
 @implementation CDMessage
 
@@ -34,171 +34,126 @@
     return self.user;
 }
 
-+(UIColor *) randomColor {
-    NSInteger i  = arc4random() % 9;
-    if (i == 0) {
-        return [BCoreUtilities colorWithHexString:@"eea9a4"];
-    }
-    if (i == 1) {
-        return [BCoreUtilities colorWithHexString:@"e2b27b"];
-    }
-    if (i == 2) {
-        return [BCoreUtilities colorWithHexString:@"a28daf"];
-    }
-    if (i == 3) {
-        return [BCoreUtilities colorWithHexString:@"bcc9ab"];
-    }
-    if (i == 4) {
-        return [BCoreUtilities colorWithHexString:@"f4e6b8"];
-    }
-    if (i == 5) {
-        return [BCoreUtilities colorWithHexString:@"8ebdd1"];
-    }
-    if (i == 6) {
-        return [BCoreUtilities colorWithHexString:@"c0d2a1"];
-    }
-    if (i == 7) {
-        return [BCoreUtilities colorWithHexString:@"9acccb"];
-    }
-    if (i == 8) {
-        return [BCoreUtilities colorWithHexString:@"9ccaa7"];
-    }
-    return Nil;
-}
-
-+(MKCoordinateRegion) regionForLongitude: (double) longitude latitude: (double) latitude {
-    return [self regionForLongitude:longitude latitude:latitude area:bLocationDefaultArea];
-}
-
-+(MKCoordinateRegion) regionForLongitude: (double) longitude latitude: (double) latitude area: (float) area {
-    
-    CLLocationCoordinate2D location;
-    location.longitude = longitude;
-    location.latitude = latitude;
-    
-    return MKCoordinateRegionMakeWithDistance(location, area, area);
-}
-
-+(MKPointAnnotation *) annotationForLongitude: (double) longitude latitude: (double) latitude {
-    
-    CLLocationCoordinate2D location;
-    location.longitude = longitude;
-    location.latitude = latitude;
-    
-    MKPointAnnotation *annotation = [[MKPointAnnotation alloc] init];
-    [annotation setCoordinate:location];
-    return annotation;
-}
-
-+(CLLocationCoordinate2D) locationForString: (NSString *) text {
-    
-    NSArray * coordinates = [text componentsSeparatedByString:@","];
-    
-    double longitude = 0;
-    double latitude = 0;
-    
-    if (coordinates.count >= 2) {
-        
-        // Location
-        latitude = ((NSString *)coordinates[0]).doubleValue;
-        longitude = ((NSString *)coordinates[1]).doubleValue;
-        
-    }
-    else {
-        NSLog(@"Error parsing location string: %@", text);
-    }
-    
-    CLLocationCoordinate2D location;
-    location.longitude = longitude;
-    location.latitude = latitude;
-    
-    return location;
-}
-
 #pragma Image information
 
 - (NSURL *)thumbnailURL {
-    // Split up the message text then return the url of the thumbnail
-    NSArray * myArray = [self.textString componentsSeparatedByString:@","];
+    NSString * url = self.compatibilityMeta[bMessageThumbnailURL];
+
+    // TODO: Depricated - remove this
+    if (!url) {
+        // Split up the message text then return the url of the thumbnail
+        NSArray * myArray = [self.textString componentsSeparatedByString:@","];
+        if (myArray.count > 0) {
+            url = myArray[0];
+        }
+        else {
+            return Nil;
+        }
+    }
     
-    return [NSURL URLWithString:myArray[0]];
+    return [NSURL URLWithString:url];
 }
 
-- (NSURL *)mainImageURL {
-    // Split up the message text then return the url of the thumbnail
-    NSArray * myArray = [self.textString componentsSeparatedByString:@","];
+- (NSURL *)imageURL {
+    NSString * url = self.compatibilityMeta[bMessageImageURL];
     
-    return [NSURL URLWithString:myArray[1]];
+    // TODO: Depricated - remove this
+    if (!url) {
+        // Split up the message text then return the url of the thumbnail
+        NSArray * myArray = [self.textString componentsSeparatedByString:@","];
+        if (myArray.count > 1) {
+            url = myArray[1];
+        }
+        else {
+            return Nil;
+        }
+    }
+    return [NSURL URLWithString:url];
 }
 
 - (NSInteger)imageWidth {
     CGSize size = [self getImageSize];
+    return size.width;
     
     // Check which one is bigger and then scale it to be 600 pixels
-    return size.width > size.height ? 600 : 600 * size.width/size.height;
+//    return size.width > size.height ? 600 : 600 * size.width/size.height;
 }
 
 - (NSInteger)imageHeight {
     
     CGSize size = [self getImageSize];
+    return size.height;
     
     // Check which one is bigger and then scale it to be 600 pixels
-    return size.height > size.width ? 600 : 600 * size.height/size.width;
+//    return size.height > size.width ? 600 : 600 * size.height/size.width;
 }
 
 -(CGSize) getImageSize {
+    NSNumber * widthNumber = self.compatibilityMeta[bMessageImageWidth];
+    NSNumber * heightNumber = self.compatibilityMeta[bMessageImageHeight];
     
     float height = -1;
     float width = -1;
     
-    NSArray * myArray = [self.textString componentsSeparatedByString:@","];
-    
-    if (myArray.count > 2) {
+    // TODO: Depricated - remove this
+    if (!widthNumber || !heightNumber) {
         
-        NSArray * dimensions = [myArray[2] componentsSeparatedByString:@"&"];
+        NSArray * myArray = [self.textString componentsSeparatedByString:@","];
         
-        if (dimensions.count > 0) {
-            width = [[dimensions[0] substringFromIndex:1] floatValue];
+        if (myArray.count > 2) {
+            
+            NSArray * dimensions = [myArray[2] componentsSeparatedByString:@"&"];
+            
+            if (dimensions.count > 0) {
+                width = [[dimensions[0] substringFromIndex:1] floatValue];
+            }
+            
+            if (dimensions.count > 1) {
+                // Take off the first letter and then use the dimensions
+                height = [[dimensions[1] substringFromIndex:1] floatValue];
+            }
         }
         
-        if (dimensions.count > 1) {
-            // Take off the first letter and then use the dimensions
-            height = [[dimensions[1] substringFromIndex:1] floatValue];
+        if (height == -1 || width == -1) {
+            return [UIImage imageWithData:self.placeholder].size;
         }
     }
-    
-    if (height == -1 || width == -1) {
-        return [UIImage imageWithData:self.placeholder].size;
+    else {
+        width = [widthNumber floatValue];
+        height = [heightNumber floatValue];
     }
     
     return CGSizeMake(width, height);
 }
 
--(NSError *) setTextAsDictionary: (NSDictionary *) dict {
-    self.json = dict;
-    
-    // Needed to support API 2
-    NSError * error;
-    NSData * jsonData = [NSJSONSerialization  dataWithJSONObject:dict options:0 error:&error];
-    NSString * myString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-
-    self.text = myString;
-    return error;
-    
-}
-
--(NSDictionary *) textAsDictionary {
-    if(!self.json) {
-        NSData *data =[self.text dataUsingEncoding:NSUTF8StringEncoding];
-        NSDictionary * response;
-        NSError * error;
-        if(data!=nil){
-            response = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-        }
-        self.json = response;
+-(NSDictionary *) compatibilityMeta {
+    if (self.meta) {
+        return self.meta;
     }
-    return self.json;
+    else {
+        return self.json;
+    }
 }
+
+// TODO: Depricated - remove this
+-(NSError *) setTextAsDictionary: (NSDictionary *) dict {
+    [self setJson:dict];
+    return Nil;
+}
+
+// TODO: Depricated - remove this
+//-(NSDictionary *) textAsDictionary {
+//    if(!self.json) {
+//        NSData *data =[self.text dataUsingEncoding:NSUTF8StringEncoding];
+//        NSDictionary * response;
+//        NSError * error;
+//        if(data!=nil){
+//            response = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+//        }
+//        self.json = response;
+//    }
+//    return self.json;
+//}
 
 -(NSString *) color {
     return self.user.messageColor;
@@ -209,16 +164,18 @@
 }
 
 -(bMessagePos) messagePosition {
-    [self updateOptimizationProperties];
-    return [[self metaValueForKey:bMessagePosition] intValue];
+    if (_position == Nil) {
+        [self updateOptimizationProperties];
+    }
+    return [_position intValue];
 }
 
 -(NSString *) textString {
-    return self.textAsDictionary[bMessageTextKey];
+    return self.json[bMessageTextKey];
 }
 
 -(void) setTextString: (NSString *) text {
-    [self setTextAsDictionary:@{bMessageTextKey: text ? text : @""}];
+    [self setJson:@{bMessageTextKey: text ? text : @""}];
 }
 
 // This helps us know if we want to show it in the thread
@@ -249,14 +206,14 @@
     NSDictionary * status = self.status;
     if(status && uid) {
         NSDictionary * userStatus = status[uid];
-        return [userStatus[b_Status] intValue];
+        return [userStatus[bStatus] intValue];
     }
     return bMessageReadStatusNone;
 }
 
 -(void) setReadStatus: (bMessageReadStatus) status_ forUserID: (NSString *) uid {
     NSMutableDictionary * mutableStatus = [NSMutableDictionary dictionaryWithDictionary:self.status];
-    mutableStatus[uid] = @{b_Status: @(status_)};
+    mutableStatus[uid] = @{bStatus: @(status_)};
     [self setReadStatus:mutableStatus];
 }
 
@@ -269,8 +226,8 @@
     BOOL allDelivered = YES;
     BOOL allRead = YES;
     for (NSDictionary * userStatus in status.allValues) {
-        //NSString * date = userStatus[b_Date];
-        NSNumber * sts = userStatus[b_Status];
+        //NSString * date = userStatus[bDate];
+        NSNumber * sts = userStatus[bStatus];
         
         bMessageReadStatus s = sts.intValue;
         allDelivered = bMessageReadStatusDelivered <= s && allDelivered;
@@ -287,38 +244,34 @@
     }
 }
 
--(CDMessage *) copy {
-    CDMessage * message = [[BStorageManager sharedManager].a createEntity:bMessageEntity];
-    message.entityID = [self.entityID copy];
-    message.date = [self.date copy];
-    message.placeholder = [self.placeholder copy];
-    message.read = [self.read copy];
-    message.resource = [self.resource copy];
-    message.resourcePath = [self.resourcePath copy];
-    message.text = [self.text copy];
-    message.type = [self.type copy];
-    message.thread = self.thread;
-    message.user = self.user;
-    message.status = [self.status copy];
-    message.meta = [self.meta copy];
-    return message;
-}
-
--(void) setMetaValue: (id) value forKey: (NSString *) key {
-    NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithDictionary:self.meta];
-    dict[key] = value;
-    self.meta = dict;
-}
-
--(id) metaValueForKey: (NSString *) key {
-    return self.meta[key];
-}
+//-(CDMessage *) copy {
+//    CDMessage * message = [BChatSDK.db createMessageEntity];
+//    message.entityID = [self.entityID copy];
+//    message.date = [self.date copy];
+//    message.placeholder = [self.placeholder copy];
+//    message.read = [self.read copy];
+//    message.resource = [self.resource copy];
+//    message.resourcePath = [self.resourcePath copy];
+//    message.text = [self.text copy];
+//    message.type = [self.type copy];
+//    message.thread = self.thread;
+//    message.user = self.user;
+//    message.status = [self.status copy];
+//    message.meta = [self.meta copy];
+//    message.json = [self.json copy];
+//    
+//    return message;
+//}
 
 -(BOOL) senderIsMe {
-    if(![self metaValueForKey:bMessageSenderIsMe]) {
-        [self updateOptimizationProperties];
-    }
-    return [[self metaValueForKey:bMessageSenderIsMe] boolValue];
+    
+    return self.userModel.isMe;
+    
+//    if(_senderIsMe == Nil) {
+//        [self updateOptimizationProperties];
+//    }
+//
+//    return [_senderIsMe boolValue];
 }
 
 // We store certain shortcuts for optimization purposes
@@ -335,20 +288,31 @@
             if(!self.lastMessage && index > 0) {
                 self.lastMessage = messages[index - 1];
             }
+            if (!self.nextMessage && index < messages.count - 1) {
+                self.nextMessage = messages[index + 1];
+            }
         }
     }
     
-    if(![self metaValueForKey:bMessageSenderIsMe]) {
-        BOOL isMe = self.userModel.isMe;
-        [self setMetaValue:@(isMe) forKey:bMessageSenderIsMe];
-    }
+//    if(_senderIsMe == Nil) {
+//        _senderIsMe = @(self.userModel.isMe);
+//    }
     
     [self updatePosition];
+}
+
+-(void) clearOptimizationProperties {
+    _senderIsMe = Nil;
+    _position = Nil;
 }
 
 -(void) updatePosition {
     BOOL isFirst = !self.lastMessage || self.lastMessage.senderIsMe != self.senderIsMe;
     BOOL isLast = !self.nextMessage || self.nextMessage.senderIsMe != self.senderIsMe;
+    
+    // Also check if we are the first or last message of a day
+    isFirst = isFirst || [self.date isNextDay: self.lastMessage.date];
+    isLast = isLast || [self.date isPreviousDay:self.nextMessage.date];
     
     int position = 0;
     if (isFirst) {
@@ -357,8 +321,8 @@
     if (isLast) {
         position = position | bMessagePosLast;
     }
-    
-    [self setMetaValue:@(position) forKey:bMessagePosition];
+   
+    _position = @(position);
 }
 
 -(CDMessage *) lazyLastMessage {
@@ -373,6 +337,17 @@
         [self updateOptimizationProperties];
     }
     return self.nextMessage;
+}
+
+-(void) updateMeta: (NSDictionary *) dict {
+    if (!self.meta) {
+        self.meta = @{};
+    }
+    self.meta = [self.meta updateMetaDict:dict];
+}
+
+-(void) setMetaValue: (id) value forKey: (NSString *) key {
+    [self updateMeta:@{key: value ? value : @""}];
 }
 
 

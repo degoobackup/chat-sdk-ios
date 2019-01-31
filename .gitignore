@@ -32,6 +32,7 @@ XcodeTestAll/
 XcodeTed/
 XcodeEric/
 XcodeXMPP/
+XcodeXMPPSwift/
 XcodeCalvin/
 XcodeXMPPSwift/
 FirebaseUI-iOS/
@@ -46,7 +47,11 @@ FirebaseAdapter/
 XcodeChatcat/
 XcodeXMPPXolile/
 XcodeLive/
-ChatSDKModules
+XcodePrivate/
+XcodeXMPPClient/
+ChatSDKModules/
+Archived/
+XcodeModules/
 
 # Ignore these in subfolders, but track in root of repo
 ChatSDKFirebase/
@@ -55,3 +60,4 @@ ChatSDKModules/
 !/ChatSDKFirebase/
 !/ChatSDKFirebaseAdapter/
 !/ChatSDKModules/
+XcodeSwift/ChatSDKSwift.xcodeproj/project.pbxproj

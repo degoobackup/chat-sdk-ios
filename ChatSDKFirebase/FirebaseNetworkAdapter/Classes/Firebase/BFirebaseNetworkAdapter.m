@@ -8,20 +8,25 @@
 
 #import "BFirebaseNetworkAdapter.h"
 
-#import <ChatSDK/ChatCore.h>
-#import "ChatFirebaseAdapter.h"
+#import <ChatSDKFirebase/FirebaseAdapter.h>
 
 @implementation BFirebaseNetworkAdapter
 
 -(id) init {
     if((self = [super init])) {
         
-        // Configure app for Facebook login
-        [FIRApp configure];
-        
-        
-        
-//        [[FIRAuth auth] signOut:Nil];
+        if (BChatSDK.config.firebaseShouldConfigureAutomatically) {
+            NSString * plist = BChatSDK.config.firebaseGoogleServicesPlistName;
+            if (plist) {
+                plist = [plist stringByReplacingOccurrencesOfString:@".plist" withString:@""];
+                NSString * path = [[NSBundle mainBundle] pathForResource:plist ofType:@"plist"];
+                FIROptions * options = [[FIROptions alloc] initWithContentsOfFile:path];
+                [FIRApp configureWithOptions:options];
+            }
+            else {
+                [FIRApp configure];
+            }
+        }
         
         self.core = [[BFirebaseCoreHandler alloc] init];
         self.auth = [[BFirebaseAuthenticationHandler alloc] init];

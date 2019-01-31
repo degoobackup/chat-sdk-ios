@@ -8,7 +8,7 @@
 
 #import "BUserCell.h"
 
-#import <ChatSDK/ChatUI.h>
+#import <ChatSDK/UI.h>
 
 @implementation BUserCell
 
@@ -33,7 +33,9 @@
     self.statusImageView.layer.cornerRadius = 6;
     [self setStateLabelText:@""];
     
-    [self.profileImageView sd_setImageWithURL:[NSURL URLWithString: user.imageURL] placeholderImage:user.imageAsImage];
+    [self.profileImageView sd_setImageWithURL:[NSURL URLWithString: user.imageURL]
+                             placeholderImage:user.imageAsImage
+                                      options:SDWebImageLowPriority & SDWebImageScaleDownLargeImages];
     
     self.title.text = user.name;
     self.subtitle.text = user.statusText;
@@ -57,15 +59,15 @@
 }
 
 -(void) setOnline {
-    self.statusImageView.image = [NSBundle chatUIImageNamed: @"icn_16_status_online.png"];
+    self.statusImageView.image = [NSBundle uiImageNamed: @"icn_16_status_online.png"];
 }
 
 -(void) setAway {
-    self.statusImageView.image = [NSBundle chatUIImageNamed: @"icn_16_status_away.png"];
+    self.statusImageView.image = [NSBundle uiImageNamed: @"icn_16_status_away.png"];
 }
 
 -(void) setOffline {
-    self.statusImageView.image = [NSBundle chatUIImageNamed: @"icn_16_status_offline.png"];
+    self.statusImageView.image = [NSBundle uiImageNamed: @"icn_16_status_offline.png"];
 }
 
 

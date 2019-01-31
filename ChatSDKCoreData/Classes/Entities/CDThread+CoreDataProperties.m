@@ -15,7 +15,6 @@
 
 @dynamic apiKey;
 @dynamic creationDate;
-@dynamic creatorEntityID;
 @dynamic deleted_;
 @dynamic dirty;
 @dynamic entityID;
@@ -28,5 +27,6 @@
 @dynamic creator;
 @dynamic messages;
 @dynamic users;
+@dynamic lastMessage;
 
 @end

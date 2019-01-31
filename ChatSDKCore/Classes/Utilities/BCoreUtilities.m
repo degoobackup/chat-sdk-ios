@@ -8,39 +8,31 @@
 
 #import "BCoreUtilities.h"
 //#import <DateTools.h>
-#import <ChatSDK/ChatCore.h> 
+#import <ChatSDK/Core.h> 
 
 @implementation BCoreUtilities
 
-+(RXPromise *) fetchImageFromURL: (NSString *) url {
-    
-    RXPromise * promise = [RXPromise new];
-    
-    NSURL *imageUrl = [NSURL URLWithString:url];
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        
-        NSData * imageData = [NSData dataWithContentsOfURL:imageUrl];
-        
++ (NSURL *)getDocumentsURL {
+    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] firstObject];
+}
+
++(RXPromise *) fetchImageFromURL:(NSURL *)url {
+    return [BFileCache cacheFileFromURL:url].then(^id(NSURL * cacheURL) {
+        NSData * data = [NSData dataWithContentsOfURL:cacheURL];
+        RXPromise * promise = [RXPromise new];
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (imageData) {
-                UIImage * image = [UIImage imageWithData:imageData];
-                [promise resolveWithResult:image];
-            }
-            else {
-                [promise resolveWithResult:Nil];
+            if (data) {
+                [promise resolveWithResult:[UIImage imageWithData:data]];
+            } else {
+                [promise rejectWithReason:nil];
             }
         });
-    });
-    
-    return promise;
+        return promise;
+    }, nil);
 }
 
 +(NSString *)getUUID {
-    CFUUIDRef theUUID = CFUUIDCreate(NULL);
-    CFStringRef string = CFUUIDCreateString(NULL, theUUID);
-    CFRelease(theUUID);
-    return (__bridge NSString *) string;
+    return [[NSUUID UUID] UUIDString];
 }
 
 +(MKCoordinateRegion) regionForLongitude: (double) longitude latitude: (double) latitude {
@@ -66,87 +58,6 @@
     [annotation setCoordinate:location];
     return annotation;
 }
-
-+(CLLocationCoordinate2D) locationForString: (NSString *) text {
-    
-    NSArray * coordinates = [text componentsSeparatedByString:@","];
-    
-    double longitude = 0;
-    double latitude = 0;
-    
-    if (coordinates.count >= 2) {
-        
-        // Location
-        latitude = ((NSString *)coordinates[0]).doubleValue;
-        longitude = ((NSString *)coordinates[1]).doubleValue;
-        
-    }
-    else {
-        NSLog(@"Error parsing location string: %@", text);
-    }
-    
-    CLLocationCoordinate2D location;
-    location.longitude = longitude;
-    location.latitude = latitude;
-    
-    return location;
-}
-
-
-//+(NSString *) timeAgo: (NSDate *) date {
-//    
-//    NSString * text = Nil;
-//    
-//    NSTimeInterval t = fabs([date timeIntervalSinceNow]);
-//    
-//    // Seconds
-//    if (t > 60.0) {
-//        t /= 60.0;
-//        // Minutes
-//        if (t > 60.0) {
-//            t /= 60.0;
-//            // Hours
-//            if (t > 24.0) {
-//                t /= 24.0;
-//                // Days
-//                if (t > 30.0) {
-//                    t /= 30.0;
-//                    // Months
-//                    if (t > 12.0) {
-//                        t /= 12.0;
-//                        // Years
-//                        if (t > 10.0) {
-//                            t /= 10.0;
-//                            text = @"decades ago";
-//                        }
-//                        else {
-//                            text = @"years ago";
-//                        }
-//                    }
-//                    else {
-//                        text = @"months ago";
-//                    }
-//                }
-//                else {
-//                    text = @"days ago";
-//                }
-//            }
-//            else {
-//                text = @"hours ago";
-//            }
-//        }
-//        else {
-//            text = @"minutes ago";
-//        }
-//    }
-//    else {
-//        text = @"seconds ago";
-//    }
-//    
-//    return [NSString stringWithFormat:@"%i %@", (int) roundf(t), text];
-//}
-
-
 
 +(UIColor*)colorWithHexString:(NSString*)hex {
     return [self colorWithHexString:hex withColorWeight:1.0];
@@ -246,7 +157,7 @@
 
 +(RXPromise *) getWithPath: (NSString *) path parameters: (NSDictionary *) params {
     
-    AFHTTPSessionManager * manager = [AFHTTPSessionManager manager];
+    AFHTTPSessionManager * manager = [self manager];
     //manager.responseSerializer = [[AFHTTPResponseSerializer alloc] init];
     //manager.responseSerializer.acceptableContentTypes = [NSSet setWithArray:@[@"text/html"]];
     
@@ -277,6 +188,17 @@
     }];
     
     return promise;
+}
+
++ (AFHTTPSessionManager*) manager
+{
+    static dispatch_once_t onceToken;
+    static AFHTTPSessionManager *manager = nil;
+    dispatch_once(&onceToken, ^{
+        manager = [AFHTTPSessionManager manager];
+    });
+    
+    return manager;
 }
 
 

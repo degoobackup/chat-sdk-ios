@@ -16,20 +16,23 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface CDMessage : NSManagedObject<PMessage, PMessageWrapper> {
+    NSNumber * _senderIsMe;
+    NSNumber * _position;
 }
 
 -(NSComparisonResult) compare: (id<PMessage>) message;
 
 -(float) getTextHeightWithFont: (UIFont *) font withWidth: (float) width;
 
-+(UIColor *) randomColor;
-
 - (NSURL *)thumbnailURL;
-- (NSURL *)mainImageURL;
+- (NSURL *) imageURL;
 - (NSInteger)imageWidth;
 - (NSInteger)imageHeight;
 
 -(void) updatePosition;
+
+-(void) updateOptimizationProperties;
+-(void) clearOptimizationProperties;
 
 @end
 

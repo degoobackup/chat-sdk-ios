@@ -6,14 +6,14 @@
 //  Copyright (c) 2015 deluge. All rights reserved.
 //
 
-#import "BEntity.h"
 #import <ChatSDK/PUserWrapper.h>
+#import <ChatSDKFirebase/BEntity.h>
 
 @class FIRUser;
 @class FIRDataSnapshot;
 
 @interface CCUserWrapper : BEntity <PUserWrapper> {
-    id<PUser> _model;
+    NSObject<PUser> * _model;
 }
 
 +(CCUserWrapper *) userWithModel: (id<PUser>) user;

@@ -8,27 +8,25 @@
 
 #import "BCoreDataManager.h"
 
-#import <ChatSDK/ChatCore.h>
-#import <ChatSDK/ChatCoreData.h>
+#import <ChatSDK/Core.h>
+#import <ChatSDK/CoreData.h>
 
 static BCoreDataManager * manager;
 
-@implementation BCoreDataManager
+static void * kMainQueueKey = (void *) "Key1";
 
-//@synthesize managedObjectContext = _managedObjectContext;
-//@synthesize managedObjectModel = _managedObjectModel;
-//@synthesize persistentStoreCoordinator = _persistentStoreCoordinator;
+@implementation BCoreDataManager
 
 +(BCoreDataManager *) sharedManager {
     
-	@synchronized(self) {
-		
-		// If the sharedSoundManager var is nil then we need to allocate it.
-		if(manager == nil) {
-			// Allocate and initialize an instance of this class
-			manager = [[self alloc] init];
-		}
-	}
+    @synchronized(self) {
+        
+        // If the sharedSoundManager var is nil then we need to allocate it.
+        if(manager == nil) {
+            // Allocate and initialize an instance of this class
+            manager = [[self alloc] init];
+        }
+    }
     return manager;
 }
 
@@ -40,38 +38,38 @@ static BCoreDataManager * manager;
         [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillTerminateNotification object:Nil queue:0 usingBlock:^(NSNotification * notification) {
             [self saveToStore];
         }];
+        [[NSNotificationCenter defaultCenter] addObserverForName:NSManagedObjectContextDidSaveNotification object:Nil queue:0 usingBlock:^(NSNotification * notification) {
+            [self privateQueueObjectContextDidSaveNotification:notification];
+        }];
+        [[NSNotificationCenter defaultCenter] addObserverForName:NSManagedObjectContextObjectsDidChangeNotification object:Nil queue:0 usingBlock:^(NSNotification * notification) {
+            [self privateQueueObjectContextDidChangeNotification:notification];
+        }];
+        
     }
+    
+    dispatch_queue_set_specific(dispatch_get_main_queue(), kMainQueueKey, kMainQueueKey, Nil);
+    
     return self;
 }
 
 -(void) saveToStore {
-    [self saveWithPromise].thenOnMain(^id(id success) {
-        [self.privateManagedObjectContext performBlock:^{
-            @try {
-                if (self.privateManagedObjectContext.hasChanges) {
-                    NSError *error = nil;
-                    if (![self.privateManagedObjectContext save:&error]) {
-                        NSLog(@"Error saving context: %@\n%@", [error localizedDescription], [error userInfo]);
-                    }
-                }
-            }
-            @catch (NSException * e) {
-                NSLog(@"Error saving context: %@\n%@", [e name], [e description]);
-            }
-        }];
-        return Nil;
+    [self saveWithPromise].then(^id(id success) {
+        return [self save:_privateMoc];
     }, Nil);
 }
 
 -(RXPromise *) saveWithPromise {
-    
+    return [RXPromise all:@[[self save:_moc], [self save:_backgrondMoc]]];
+}
+
+-(RXPromise *) save: (NSManagedObjectContext *) context {
     RXPromise * promise = [RXPromise new];
     
-    [self.managedObjectContext performBlock:^{
+    [context performBlock:^{
         @try {
-            if (self.managedObjectContext.hasChanges) {
+            if (context.hasChanges) {
                 NSError *error = nil;
-                if (![self.managedObjectContext save:&error]) {
+                if (![context save:&error]) {
                     NSLog(@"Error saving context: %@\n%@", [error localizedDescription], [error userInfo]);
                     [promise rejectWithReason:error];
                     return;
@@ -84,12 +82,11 @@ static BCoreDataManager * manager;
             [promise rejectWithReason:e];
         }
     }];
-    
     return promise;
 }
 
--(void) save {
-    [self saveWithPromise];
+-(RXPromise *) save {
+    return [self saveWithPromise];
 }
 
 -(NSArray *) fetchEntitiesWithName: (NSString *) entityName {
@@ -97,26 +94,43 @@ static BCoreDataManager * manager;
 }
 
 -(id) executeFetchRequest: (NSFetchRequest *) fetchRequest entityName: (NSString *) entityName predicate: (NSPredicate *) predicate {
-    @synchronized(self.managedObjectContext) {
-        [fetchRequest setIncludesPendingChanges:YES];
-        NSEntityDescription * entity = [NSEntityDescription entityForName:entityName inManagedObjectContext:self.managedObjectContext];
-        if (!entity) {
-            return Nil;
-        }
-        
-        [fetchRequest setEntity:entity];
-        if (predicate != Nil) {
-            [fetchRequest setPredicate:predicate];
-        }
-        
-        NSError * error = Nil;
-        NSArray * entities = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
-        if (error) {
-            NSLog(@"Fetch error: %@", error.localizedDescription);
-        }
-        
-        return entities;
+    [fetchRequest setIncludesPendingChanges:YES];
+    
+    NSEntityDescription * entity = [NSEntityDescription entityForName:entityName inManagedObjectContext:self.managedObjectContextForThread];
+    if (!entity) {
+        return Nil;
     }
+    
+    [fetchRequest setEntity:entity];
+    if (predicate != Nil) {
+        [fetchRequest setPredicate:predicate];
+    }
+    
+    NSError * error = Nil;
+    NSArray * entities = [self.managedObjectContextForThread executeFetchRequest:fetchRequest error:&error];
+    if (error) {
+        NSLog(@"Fetch error: %@", error.localizedDescription);
+    }
+    return entities;
+    
+}
+
+-(NSArray *) fetchUserConnectionsWithType: (bUserConnectionType) type {
+    return [self fetchUserConnectionsWithType:type entityID:Nil];
+}
+
+-(NSArray *) fetchUserConnectionsWithType: (bUserConnectionType) type entityID: (nullable NSString *) entityID {
+    id<PUser> currentUser = BChatSDK.currentUser;
+
+    NSPredicate * predicate;
+    if (entityID) {
+        predicate = [NSPredicate predicateWithFormat:@"type = %@ AND owner = %@ AND entityID = %@", @(type), currentUser, entityID];
+    }
+    else {
+        predicate = [NSPredicate predicateWithFormat:@"type = %@ AND owner = %@", @(type), currentUser];
+    }
+
+    return [BChatSDK.db fetchEntitiesWithName:bUserConnectionEntity withPredicate:predicate];
 }
 
 -(NSArray *) fetchEntitiesWithName: (NSString *) entityName withPredicate: (NSPredicate *) predicate {
@@ -124,60 +138,84 @@ static BCoreDataManager * manager;
 }
 
 -(id) fetchEntityWithID: (NSString *) entityID withType: (NSString *) type {
-    @synchronized(self.managedObjectContext)  {
-        NSPredicate * predicate = [NSPredicate predicateWithFormat:@"entityID = %@", entityID];
-        NSArray * results = [self fetchEntitiesWithName:type withPredicate:predicate];
-        for (id result in results) {
-            return result;
-        }
-        return Nil;
+    NSPredicate * predicate = [NSPredicate predicateWithFormat:@"entityID = %@", entityID];
+    // Copy it to stop a mutation error
+    NSArray * results = [[self fetchEntitiesWithName:type withPredicate:predicate] copy];
+    for (id result in results) {
+        return result;
     }
+    return Nil;
+}
+
+-(RXPromise *) performOnPrivate: (id (^)(void))block  {
+    return [self performOn:self.backgroundManagedObjectContext withBlock:block];
+}
+
+-(RXPromise *) performOnMain: (id(^)(void)) block  {
+    return [self performOn:self.managedObjectContext withBlock:block];
+}
+
+-(RXPromise *) performOn: (NSManagedObjectContext *) context withBlock: (id(^)(void)) block {
+    RXPromise * promise = [RXPromise new];
+    [context performBlock:^{
+        id result = block();
+        if(context.hasChanges) {
+            NSError * error;
+            [context save:&error];
+            if(error) {
+                NSLog(@"Error %@", error.localizedDescription);
+            }
+        }
+        [promise resolveWithResult:result];
+    }];
+    return promise;
 }
 
 -(id) fetchOrCreateEntityWithID: (NSString *) entityID withType: (NSString *) type {
-    @synchronized(self.managedObjectContext)  {
-        id<PEntity> entity = [self fetchEntityWithID:entityID withType:type];
-        if (!entity) {
-            entity = [self createEntity:type];
-        }
-        if (entityID && [entity respondsToSelector:@selector(setEntityID:)]) {
-            [((id<PEntity>) entity) setEntityID:entityID];
-        }
-        
-        return entity;
+    id<PEntity> entity = [self fetchEntityWithID:entityID withType:type];
+    if (!entity) {
+        entity = [self createEntity:type];
     }
+    if (entityID && [entity respondsToSelector:@selector(setEntityID:)]) {
+        [((id<PEntity>) entity) setEntityID:entityID];
+    }
+    
+    return entity;
 }
 
 -(id) fetchOrCreateEntityWithPredicate: (NSPredicate *) predicate withType: (NSString *) type {
-    @synchronized(self.managedObjectContext)  {
-        NSArray * entities = [self fetchEntitiesWithName:type withPredicate:predicate];
-        if (entities.count) {
-            return entities.firstObject;
-        }
-        else {
-            return [self createEntity:type];
-        }
+    NSArray * entities = [self fetchEntitiesWithName:type withPredicate:predicate];
+    if (entities.count) {
+        return entities.firstObject;
+    }
+    else {
+        return [self createEntity:type];
     }
 }
 
 -(id) createEntity: (NSString *) entityName {
-    @synchronized(self.managedObjectContext)  {
-        if ([entityName isEqualToString:bUserEntity]) {
-            NSLog(@"Creating: %@", entityName);
-        }
-        
-        id entity = [NSEntityDescription insertNewObjectForEntityForName:entityName
-                                             inManagedObjectContext:self.managedObjectContext];
-        return entity;
+    if ([entityName isEqualToString:bUserEntity]) {
+        NSLog(@"Creating: %@", entityName);
     }
+    
+    id entity = [NSEntityDescription insertNewObjectForEntityForName:entityName
+                                              inManagedObjectContext:self.managedObjectContextForThread];
+    return entity;
 }
 
--(void) deleteEntity: (id) entity {
-    @synchronized(self.managedObjectContext)  {
-        if (entity) {
-            [self.managedObjectContext deleteObject:entity];
-        }
-    }
+-(bQueueType) queueType {
+    return dispatch_get_specific(kMainQueueKey) ? bQueueTypeMain : bQueueTypeBackground;
+}
+
+-(NSManagedObjectContext *) managedObjectContextForThread {
+//    assert(dispatch_get_specific(kMainQueueKey));
+//    if (dispatch_get_specific(kMainQueueKey)) {
+        return self.managedObjectContext;
+//    }
+//    else {
+//        NSLog(@"managed object context: %@", [NSThread currentThread]);
+//        return self.backgroundManagedObjectContext;
+//    }
 }
 
 - (NSManagedObjectContext *) privateManagedObjectContext {
@@ -190,42 +228,57 @@ static BCoreDataManager * manager;
     return _privateMoc;
 }
 
-- (NSManagedObjectContext *) managedObjectContext {
+- (NSManagedObjectContext *) backgroundManagedObjectContext {
+    
+    if (!_backgrondMoc) {
+        _backgrondMoc = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        _backgrondMoc.parentContext = self.managedObjectContext;
+        
+        NSUndoManager *undoManager = [[NSUndoManager alloc] init];
+        [_backgrondMoc setUndoManager:undoManager];
+        [_backgrondMoc setAutomaticallyMergesChangesFromParent:YES];
+    }
+    
+    return _backgrondMoc;
+}
 
+- (NSManagedObjectContext *) managedObjectContext {
+    
     if (!_moc) {
         _moc = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         _moc.parentContext = self.privateManagedObjectContext;
-        
         NSUndoManager *undoManager = [[NSUndoManager alloc] init];
         [_moc setUndoManager:undoManager];
+        //        [_moc setAutomaticallyMergesChangesFromParent:YES];
     }
-    
     return _moc;
 }
 
 -(void) beginUndoGroup {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.managedObjectContext.undoManager beginUndoGrouping];
-    });
+    [self.managedObjectContextForThread.undoManager beginUndoGrouping];
 }
 
--(void) endUndoGroup {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.managedObjectContext.undoManager endUndoGrouping];
-    });
+-(id<PThread>) threadForEntityID: (NSString *) entityID {
+    return [self fetchEntityWithID:entityID withType:bThreadEntity];
 }
+
+-(id<PUser>) userForEntityID: (NSString *) entityID {
+    return [self fetchEntityWithID:entityID withType:bUserEntity];
+}
+
+-(id<PMessage>) messageForEntityID: (NSString *) entityID {
+    return [self fetchEntityWithID:entityID withType:bMessageEntity];
+}
+
 
 -(void) undo {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.managedObjectContext.undoManager undo];
-    });
+    [self.managedObjectContextForThread.undoManager undo];
 }
-
 
 - (NSManagedObjectModel *)managedObjectModel {
     
     if (!_model) {
-        NSBundle * bundle = [NSBundle bundleWithFramework:@"ChatSDK" name:@"ChatCoreData"];
+        NSBundle * bundle = [NSBundle bundleWithName:bCoreDataBundle];
         
         NSString * path = [bundle pathForResource:@"ChatSDK" ofType:@"momd"];
         NSURL * momURL = [NSURL fileURLWithPath:path];
@@ -240,15 +293,15 @@ static BCoreDataManager * manager;
     if (!_store) {
         NSURL *storeUrl = [NSURL fileURLWithPath: [[self applicationDocumentsDirectory]
                                                    stringByAppendingPathComponent: @"ChatSDK.sqlite"]];
-
+        
         NSError *error = nil;
         _store = [[NSPersistentStoreCoordinator alloc]
-                                       initWithManagedObjectModel:[self managedObjectModel]];
+                  initWithManagedObjectModel:[self managedObjectModel]];
         
         NSDictionary * options = @{NSMigratePersistentStoresAutomaticallyOption: @YES, NSInferMappingModelAutomaticallyOption: @YES};
         
         if(![_store addPersistentStoreWithType:NSSQLiteStoreType
-                                                      configuration:nil URL:storeUrl options:options error:&error]) {
+                                 configuration:nil URL:storeUrl options:options error:&error]) {
             NSLog(@"Error setting up database: %@", error.localizedDescription);
         }
     }
@@ -261,78 +314,137 @@ static BCoreDataManager * manager;
 }
 
 -(id<PMessage>) createMessageEntity {
-    @synchronized(self.managedObjectContext)  {
-        return [self createEntity:bMessageEntity];
-    }
+    return [self createEntity:bMessageEntity];
+}
+
+-(void) endUndoGroup {
+    [self.managedObjectContextForThread.undoManager endUndoGrouping];
 }
 
 -(NSArray *) fetchEntitiesWithTypes: (NSArray *) types {
-    @synchronized(self.managedObjectContext)  {
-        NSMutableArray * entities = [NSMutableArray new];
-        for (NSString * type in types) {
-            [entities addObjectsFromArray:[self fetchEntitiesWithName:type]];
-        }
-        return entities;
+    NSMutableArray * entities = [NSMutableArray new];
+    for (NSString * type in types) {
+        [entities addObjectsFromArray:[self fetchEntitiesWithName:type]];
     }
+    return entities;
 }
 
 -(void) deleteEntitiesWithType: (NSString *) type {
-    @synchronized(self.managedObjectContext)  {
-        NSArray * entities = [self fetchEntitiesWithTypes:@[type]];
-        for (id entity in entities) {
-            [self deleteEntity: entity];
-        }
+    NSArray * entities = [self fetchEntitiesWithTypes:@[type]];
+    for (id entity in entities) {
+        [self deleteEntity: entity];
     }
 }
 
 -(void) deleteEntities: (NSArray *) entities {
-    @synchronized(self.managedObjectContext)  {
-        for (id entity in entities) {
-            [self deleteEntity:entity];
-        }
+    for(NSManagedObject * entity in entities) {
+        [self deleteEntity:entity];
     }
 }
 
+-(void) deleteEntity: (id) entity {
+    [self.managedObjectContextForThread deleteObject:entity];
+}
+
 -(void) deleteAllData {
-    @synchronized(self.managedObjectContext)  {
-        NSArray * entities = [self fetchEntitiesWithTypes:@[bUserEntity,
-                                                            bUserConnectionEntity,
-                                                            bMessageEntity,
-                                                            bThreadEntity,
-                                                            bUserAccountEntity,
-                                                            bMetaDataEntity]];
-        for (NSManagedObject * entity in entities) {
-            [self deleteEntity:entity];
-        }
-        [self save];
+    NSArray * entities = [self fetchEntitiesWithTypes:@[bUserEntity,
+                                                        bUserConnectionEntity,
+                                                        bMessageEntity,
+                                                        bThreadEntity,
+                                                        bUserAccountEntity,
+                                                        bMetaDataEntity]];
+    for (NSManagedObject * entity in entities) {
+        [self deleteEntity:entity];
     }
 }
 
 -(id<PThread>) createThreadEntity {
-    @synchronized(self.managedObjectContext)  {
-        return [self createEntity:bThreadEntity];
-    }
+    return [self createEntity:bThreadEntity];
 }
 
-// TODO: Check this
 -(id<PThread>) fetchThreadWithUsers: (NSArray *) users {
-    @synchronized(self.managedObjectContext)  {
-        NSMutableArray * allUsers = [NSMutableArray arrayWithArray:users];
-
-        id<PUser> currentUser = NM.currentUser;
-        if (![allUsers containsObject:currentUser]) {
-            [allUsers addObject:currentUser];
-        }
-        
-        for (id<PThread> thread in currentUser.threads) {
-            if (thread.users.count == allUsers.count) {
-                if ([thread.users isEqualToSet:[NSSet setWithArray:allUsers]]) {
-                    return thread;
-                }
+    NSMutableArray * allUsers = [NSMutableArray arrayWithArray:users];
+    
+    id<PUser> currentUser = BChatSDK.currentUser;
+    if (![allUsers containsObject:currentUser]) {
+        [allUsers addObject:currentUser];
+    }
+    
+    for (id<PThread> thread in currentUser.threads) {
+        if (thread.users.count == allUsers.count) {
+            if ([thread.users isEqualToSet:[NSSet setWithArray:allUsers]]) {
+                return thread;
             }
         }
-        return Nil;
     }
+    return Nil;
+}
+
+/// https://stackoverflow.com/questions/36338135/nsmanagedobjectcontext-how-to-update-child-when-parent-changes
+/// I need this firing as sometimes objects change and the save notification below is not enough to make sure the UI updates.
+- (void)privateQueueObjectContextDidChangeNotification:(NSNotification *)notification {
+    NSManagedObjectContext * context = notification.object;
+    
+    NSManagedObjectContext * parent = self.privateManagedObjectContext;
+    NSManagedObjectContext * background = self.backgroundManagedObjectContext;
+    NSManagedObjectContext * main = self.managedObjectContext;
+    
+    if([context isEqual:parent]) {
+        NSLog(@"Parent");
+    }
+    else if([context isEqual:background]) {
+        NSLog(@"Background");
+    }
+    else if([context isEqual:main]) {
+        NSLog(@"Main");
+    }
+    else {
+        NSLog(@"None");
+    }
+    
+    //    if ([context isEqual:parent]) {
+    //        //Collect the objectIDs of the objects that changed
+    //        __block NSMutableSet *objectIDs = [NSMutableSet set];
+    //        [context performBlockAndWait:^{
+    //            NSDictionary *userInfo = notification.userInfo;
+    //            for (NSManagedObject *changedObject in userInfo[NSUpdatedObjectsKey]) {
+    //                [objectIDs addObject:changedObject.objectID];
+    //            }
+    //            for (NSManagedObject *changedObject in userInfo[NSInsertedObjectsKey]) {
+    //                [objectIDs addObject:changedObject.objectID];
+    //            }
+    //            for (NSManagedObject *changedObject in userInfo[NSDeletedObjectsKey]) {
+    //                [objectIDs addObject:changedObject.objectID];
+    //            }
+    //        }];
+    //
+    //        //Refresh the changed objects
+    //        [background performBlock:^{
+    //            for (NSManagedObjectID *objectID in objectIDs) {
+    //                NSManagedObject *object = [background existingObjectWithID:objectID error:nil];
+    //                if (object) {
+    //                    [background refreshObject:object mergeChanges:YES];
+    //                    //NSLog(@"refreshing %@", [object description]);
+    //                }
+    //            }
+    //        }];
+    //        [main performBlock:^{
+    //            for (NSManagedObjectID *objectID in objectIDs) {
+    //                NSManagedObject *object = [main existingObjectWithID:objectID error:nil];
+    //                if (object) {
+    //                    [main refreshObject:object mergeChanges:YES];
+    //                    //NSLog(@"refreshing %@", [object description]);
+    //                }
+    //            }
+    //        }];
+    //    }
+}
+- (void)privateQueueObjectContextDidSaveNotification:(NSNotification *)notification {
+    //NSLog(@"private Q MOC has saved");
+    //    [self.mainQueueObjectContext performBlock:^{
+    //        [self.mainQueueObjectContext mergeChangesFromContextDidSaveNotification:notification];
+    //        // I had UI update problems which I fixed with mergeChangesFromContextDidSaveNotification along with obtainPermanentIDsForObjects: in the insertEntity call.
+    //    }];
 }
 
 @end

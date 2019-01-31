@@ -8,16 +8,16 @@
 
 #import "BChatOptionsActionSheet.h"
 
-#import <ChatSDK/ChatCore.h>
-#import <ChatSDK/ChatUI.h>
+#import <ChatSDK/Core.h>
+#import <ChatSDK/UI.h>
 
 @implementation BChatOptionsActionSheet
 
--(instancetype) initWithChatViewController: (BChatViewController *) chatViewController {
+-(instancetype) initWithDelegate: (id<BChatOptionDelegate>) delegate {
     if((self = [self init])) {
-        _chatViewController = chatViewController;
+        self.delegate = delegate;
         
-        _options = [BInterfaceManager sharedManager].a.chatOptions;
+        _options = BChatSDK.ui.chatOptions;
         
         for(BChatOption * o in _options) {
             o.parent = self;
@@ -28,7 +28,7 @@
 }
 
 -(BOOL) show {
-    [_chatViewController hideKeyboard];
+    [_delegate hideKeyboard];
     UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:[NSBundle t:bOptions]
                                                               delegate:self
                                                      cancelButtonTitle:[NSBundle t:bOk]
@@ -39,7 +39,7 @@
         for (BChatOption * option in _options) {
             [actionSheet addButtonWithTitle:option.title];
         }
-        [actionSheet showInView:_chatViewController.view];
+        [actionSheet showInView:_delegate.view];
     }
     else {
         // TODO: hide the option button
@@ -70,8 +70,5 @@
     
 }
 
--(void) setOptionsDelegate:(id<BChatOptionDelegate>)delegate {
-    self.delegate = delegate;
-}
 
 @end

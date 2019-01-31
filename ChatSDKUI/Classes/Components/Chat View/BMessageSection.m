@@ -8,8 +8,8 @@
 
 #import "BMessageSection.h"
 
-#import <ChatSDK/ChatCore.h>
-#import <ChatSDK/ChatUI.h>
+#import <ChatSDK/Core.h>
+#import <ChatSDK/UI.h>
 #import <ChatSDK/PElmMessage.h>
 
 @implementation BMessageSection
@@ -33,14 +33,14 @@
     return [message.date dateAgo];
 }
 
--(id<PElmMessage>) messageForRow: (int) row {
+-(id<PElmMessage>) messageForRow: (NSInteger) row {
     if (row < _messages.count) {
         return _messages[row];
     }
     return Nil;
 }
 
--(int) rowCount {
+-(NSInteger) rowCount {
     return _messages.count;
 }
 

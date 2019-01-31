@@ -7,7 +7,7 @@
 //
 
 #import "BAbstractAuthenticationHandler.h"
-#import <ChatSDK/ChatCore.h>
+#import <ChatSDK/Core.h>
 
 @implementation BAbstractAuthenticationHandler
 
@@ -16,20 +16,24 @@
     
     switch (accountType) {
         case bAccountTypeFacebook:
-            key = [BSettingsManager facebookAppId];
-            return key.length && NM.socialLogin && [BChatSDK shared].configuration.facebookLoginEnabled;
+            key = BChatSDK.config.facebookAppId;
+            return key.length && BChatSDK.socialLogin && BChatSDK.shared.configuration.facebookLoginEnabled;
         case bAccountTypeTwitter:
-            key = [BSettingsManager twitterApiKey];
-            return key.length && NM.socialLogin && [BChatSDK shared].configuration.twitterLoginEnabled;
+            key = BChatSDK.config.twitterApiKey;
+            return key.length && BChatSDK.socialLogin && BChatSDK.shared.configuration.twitterLoginEnabled;
         case bAccountTypeGoogle:
-            key = [BSettingsManager googleClientKey];
-            return key.length && [BChatSDK shared].configuration.googleLoginEnabled && NM.socialLogin;
+            key = BChatSDK.config.googleClientKey;
+            return key.length && BChatSDK.shared.configuration.googleLoginEnabled && BChatSDK.socialLogin;
         case bAccountTypeAnonymous:
-            return [BChatSDK shared].configuration.anonymousLoginEnabled;
+            return BChatSDK.config.anonymousLoginEnabled;
         default:
             break;
     }
     return NO;
+}
+
+-(BOOL) userAuthenticatedThisSession {
+    return _authenticatedThisSession && self.userAuthenticated;
 }
 
 -(RXPromise *) authenticateWithDictionary:(NSDictionary *)details {

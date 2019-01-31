@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 deluge. All rights reserved.
 //
 
-#import "ChatFirebaseAdapter.h"
+#import <ChatSDKFirebase/FirebaseAdapter.h>
 
 @class FIRDatabaseReference;
 
@@ -29,9 +29,11 @@
 +(FIRDatabaseReference *) threadTypingRef: (NSString *) firebaseID;
 +(FIRDatabaseReference *) threadUsersRef: (NSString *) firebaseID;
 +(FIRDatabaseReference *) threadMetaRef: (NSString *) firebaseID;
++(FIRDatabaseReference *) threadLastMessageRef: (NSString *) firebaseID;
 
 // Flagged
-+(FIRDatabaseReference *) flaggedRefWithThread: (NSString *) threadID message: (NSString *) messageID;
++(FIRDatabaseReference *) flaggedMessagesRef;
++(FIRDatabaseReference *) flaggedRefWithMessage: (NSString *) messageID;
 
 // Indexes
 +(FIRDatabaseReference *) indexRef;

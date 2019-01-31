@@ -7,12 +7,13 @@
 //
 
 #import "BEntity.h"
+
 #import <ChatSDK/PThreadWrapper.h>
 
 @class CCUserWrapper;
 
 @interface CCThreadWrapper : BEntity<PThreadWrapper> {
-    id<PThread> _model;
+    NSObject<PThread> * _model;
 }
 
 /**
@@ -105,9 +106,12 @@
  * @brief Set the last message on the thread (used by the web client)
  */
 -(RXPromise *) pushLastMessage: (NSDictionary *) messageData;
+-(void) lastMessageOn;
+-(void) lastMessageOff;
 
 -(RXPromise *) pushMeta;
 -(void) metaOn;
 -(void) metaOff;
+-(RXPromise *) updateLastMessage;
 
 @end

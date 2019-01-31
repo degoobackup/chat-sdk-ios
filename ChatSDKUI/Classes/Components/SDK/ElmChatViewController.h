@@ -13,15 +13,19 @@
 #import <ChatSDK/ElmChatViewDelegate.h>
 
 @protocol PChatOptionsHandler;
+@protocol PImageViewController;
 @protocol PSendBar;
 
-@class MPMoviePlayerController;
 @class BTextInputView;
 @class BImageViewController;
 @class BLocationViewController;
+@class BFileViewController;
 @class BMessageSection;
+@class BNotificationObserverList;
+@class BCoreUtilities;
+@class BHook;
 
-@interface ElmChatViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, PSendBarDelegate, UINavigationControllerDelegate, UIScrollViewDelegate, BChatOptionDelegate> {
+@interface ElmChatViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, PSendBarDelegate, UINavigationControllerDelegate, UIScrollViewDelegate, BChatOptionDelegate, UIDocumentInteractionControllerDelegate> {
     
     NSArray<BMessageSection *> * _messages;
     
@@ -29,13 +33,15 @@
     
     UIGestureRecognizer * _tapRecognizer;
     
-    BImageViewController * _imageViewController;
     UINavigationController * _imageViewNavigationController;
 
-    BLocationViewController * _locationViewController;
     UINavigationController * _locationViewNavigationController;
+
+    UIDocumentInteractionController * _documentInteractionController;
     
     UIRefreshControl * _refreshControl;
+    
+    BHook * _internetConnectionHook;
         
     // Typing Indicator
     NSTimer * _typingTimer;
@@ -49,14 +55,16 @@
     UIView * _keyboardOverlay;
     
     id<PChatOptionsHandler> _optionsHandler;
+    
+    BNotificationObserverList * _notificationList;
+    
+    BOOL _observersAdded;
 }
 
 @property (weak, nonatomic) IBOutlet UITableView * tableView;
 @property (nonatomic, readwrite, weak) id<ElmChatViewDelegate> delegate;
 @property (nonatomic, readonly) UIView<PSendBar> * sendBarView;
 @property (nonatomic, readonly) UILabel * titleLabel;
-
-@property (strong, nonatomic) MPMoviePlayerController * videoPlayer;
 
 -(instancetype) initWithDelegate: (id<ElmChatViewDelegate>) delegate;
 
