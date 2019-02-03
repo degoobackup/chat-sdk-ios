@@ -20,7 +20,7 @@ typedef enum {
     bMessageTypeSystem = 5,
     bMessageTypeSticker = 6,
     bMessageTypeFile = 7,
-    bMessageTypeCustom = 99,
+    bMessageTypeCustom = 8,
 } bMessageType;
 
 typedef enum {
