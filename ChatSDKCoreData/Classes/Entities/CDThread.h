@@ -11,13 +11,14 @@
 #import <ChatSDK/PEntity.h>
 #import <ChatSDK/PThread_.h>
 #import <ChatSDK/PThreadWrapper.h>
+#import <ChatSDK/PElmThread.h>
 
 
 @class CDMessage, CDUser;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface CDThread : NSManagedObject<PThread, PThreadWrapper> {
+@interface CDThread : NSManagedObject<PElmThread, PThread, PThreadWrapper> {
     // We don't always want to load all the messages into memory so we
     // maintain a separate list of the messages that are currently relevant to us
     // i.e. start by only loading a certain number of messages

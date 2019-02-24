@@ -10,12 +10,13 @@
 #import <CoreData/CoreData.h>
 #import <ChatSDK/PMessage.h>
 #import <ChatSDK/PMessageWrapper.h>
+#import <ChatSDK/PElmMessage.h>
 
 @class CDUser, CDThread;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface CDMessage : NSManagedObject<PMessage, PMessageWrapper> {
+@interface CDMessage : NSManagedObject<PElmMessage, PMessage, PMessageWrapper> {
     NSNumber * _senderIsMe;
     NSNumber * _position;
 }

@@ -11,12 +11,13 @@
 #import <ChatSDK/PUser.h>
 #import <ChatSDK/PEntity.h>
 #import <ChatSDK/PUserWrapper.h>
+#import <ChatSDK/PElmUser.h>
 
 @class CDLinkedContact, CDMessage, CDThread, CDUserAccount;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface CDUser : NSManagedObject<PUser, PUserWrapper>
+@interface CDUser : NSManagedObject<PElmUser, PUser, PUserWrapper>
 
 // Insert code here to declare functionality of your managed object subclass
 
