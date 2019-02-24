@@ -27,6 +27,7 @@
 -(RXPromise *) sendStickerMessage: (NSString *) name;
 -(RXPromise *) sendFileMessage: (NSDictionary *) file;
 -(void) hideKeyboard;
+@optional
 -(UIView *) view;
 
 @end
