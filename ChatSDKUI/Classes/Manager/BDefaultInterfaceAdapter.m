@@ -102,7 +102,7 @@
     return [self navigationControllerWithRootViewController:self.eulaViewController];
 }
 
--(BChatViewController *) chatViewControllerWithThread: (id<PThread>) thread {
+-(UIViewController *) chatViewControllerWithThread: (id<PThread>) thread {
     return [[BChatViewController alloc] initWithThread:thread];
 }
 

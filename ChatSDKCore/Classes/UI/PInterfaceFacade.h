@@ -37,7 +37,7 @@
 -(BFriendsListViewController *) friendsViewControllerWithUsersToExclude: (NSArray *) usersToExclude onComplete: (void(^)(NSArray * users, NSString * name)) action;
 -(UINavigationController *) friendsNavigationControllerWithUsersToExclude: (NSArray *) usersToExclude onComplete: (void(^)(NSArray * users, NSString * name)) action;
 
--(BChatViewController *) chatViewControllerWithThread: (id<PThread>) thread;
+-(UIViewController *) chatViewControllerWithThread: (id<PThread>) thread;
 
 -(NSArray *) defaultTabBarViewControllers;
 -(UIView<PSendBar> *) sendBarView;
