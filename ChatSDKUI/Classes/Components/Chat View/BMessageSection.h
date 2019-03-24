@@ -20,6 +20,7 @@
 -(id<PElmMessage>) messageForRow: (NSInteger) row;
 -(NSInteger) rowCount;
 -(void) addMessage: (id<PElmMessage>) message;
+-(NSIndexPath * _Nullable)removeMessage:(id<PElmMessage>)message;
 -(UIView *) view;
 
 @end

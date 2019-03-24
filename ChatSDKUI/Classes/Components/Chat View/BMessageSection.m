@@ -44,6 +44,20 @@
     return _messages.count;
 }
 
+-(NSIndexPath *)removeMessage:(id<PElmMessage>)message {
+    NSString *entityID = [message entityID];
+    __block NSIndexPath *indexPath;
+    [_messages enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<PElmMessage>) m, NSUInteger index, BOOL *stop) {
+        if ([[m entityID] isEqualToString: entityID]) {
+            [_messages removeObjectAtIndex:index];
+            indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+            *stop = YES;
+            return;
+        }
+    }];
+    return indexPath;
+}
+
 -(void) addMessage:(id<PElmMessage>)message {
     [_messages addObject:message];
 }
@@ -73,8 +87,6 @@
         innerView.clipsToBounds = YES;
         innerView.backgroundColor = [BCoreUtilities colorWithHexString:@"#EEEEEE"];
         innerView.layer.cornerRadius = 5;
-
-
     }
     return _view;
 }
