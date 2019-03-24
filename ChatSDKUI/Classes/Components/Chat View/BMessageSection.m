@@ -44,8 +44,7 @@
     return _messages.count;
 }
 
--(NSIndexPath *)removeMessage:(id<PElmMessage>)message {
-    NSString *entityID = [message entityID];
+-(NSIndexPath *)removeMessage:(NSString *)entityID {
     __block NSIndexPath *indexPath;
     [_messages enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<PElmMessage> m, NSUInteger index, BOOL *stop) {
         if ([[m entityID] isEqualToString: entityID]) {
