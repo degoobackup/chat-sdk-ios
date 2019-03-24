@@ -21,6 +21,7 @@
 -(NSInteger) rowCount;
 -(void) addMessage: (id<PElmMessage>) message;
 -(NSIndexPath * _Nullable)removeMessage:(NSString *)entityID;
+-(void)removeMessageAtIndex:(NSInteger)index;
 -(UIView *) view;
 
 @end

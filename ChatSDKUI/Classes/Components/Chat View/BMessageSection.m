@@ -44,6 +44,10 @@
     return _messages.count;
 }
 
+-(void)removeMessageAtIndex:(NSInteger)index {
+    [_messages removeObjectAtIndex:index];
+}
+
 -(NSIndexPath *)removeMessage:(NSString *)entityID {
     __block NSIndexPath *indexPath;
     [_messages enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<PElmMessage> m, NSUInteger index, BOOL *stop) {
