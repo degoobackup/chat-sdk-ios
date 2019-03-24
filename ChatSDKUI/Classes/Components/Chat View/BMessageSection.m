@@ -47,7 +47,7 @@
 -(NSIndexPath *)removeMessage:(id<PElmMessage>)message {
     NSString *entityID = [message entityID];
     __block NSIndexPath *indexPath;
-    [_messages enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<PElmMessage>) m, NSUInteger index, BOOL *stop) {
+    [_messages enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<PElmMessage> m, NSUInteger index, BOOL *stop) {
         if ([[m entityID] isEqualToString: entityID]) {
             [_messages removeObjectAtIndex:index];
             indexPath = [NSIndexPath indexPathForRow:index inSection:0];
