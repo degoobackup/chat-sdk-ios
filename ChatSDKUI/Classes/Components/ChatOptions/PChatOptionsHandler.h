@@ -19,7 +19,7 @@
 
 -(instancetype) initWithDelegate: (id<BChatOptionDelegate>) delegate;
 
--(BOOL) show;
+-(BOOL) show: (UIView *)popoverSourceView;
 -(BOOL) hide;
 -(id<BChatOptionDelegate>) delegate;
 -(void) setDelegate: (id<BChatOptionDelegate>) delegate;

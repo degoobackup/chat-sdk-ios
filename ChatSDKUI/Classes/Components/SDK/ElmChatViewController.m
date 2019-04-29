@@ -611,7 +611,7 @@
         _keyboardOverlay.userInteractionEnabled = YES;
     }
     
-    return [_optionsHandler show];
+    return [_optionsHandler show: nil];
 }
 
 -(BOOL) hideOptions {

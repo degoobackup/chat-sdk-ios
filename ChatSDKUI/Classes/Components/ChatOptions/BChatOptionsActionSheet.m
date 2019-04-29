@@ -27,23 +27,25 @@
     return self;
 }
 
--(BOOL) show {
-    [_delegate hideKeyboard];
-    UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:[NSBundle t:bOptions]
-                                                              delegate:self
-                                                     cancelButtonTitle:[NSBundle t:bOk]
-                                                destructiveButtonTitle:Nil
-                                                     otherButtonTitles:Nil];
+-(BOOL) show: (UIView *)popoverSourceView {
+    [self.delegate hideKeyboard];
+    UIAlertController * alert = [UIAlertController alertControllerWithTitle: [NSBundle t: bOptions] message: nil preferredStyle: UIAlertControllerStyleActionSheet];
     
-    if (_options.count) {
-        for (BChatOption * option in _options) {
-            [actionSheet addButtonWithTitle:option.title];
-        }
-        [actionSheet showInView:_delegate.view];
+    if (popoverSourceView != nil) {
+        alert.popoverPresentationController.sourceView = popoverSourceView;
+        alert.popoverPresentationController.sourceRect = popoverSourceView.frame;
     }
-    else {
-        // TODO: hide the option button
+    
+    for (BChatOption * option in _options) {
+        UIAlertAction * action = [UIAlertAction actionWithTitle: option.title style: UIAlertActionStyleDefault handler: ^(UIAlertAction * _Nonnull action) {
+            [option execute];
+        }];
+        [alert addAction: action];
     }
+    [alert addAction: [UIAlertAction actionWithTitle: [NSBundle t:bOk] style: UIAlertActionStyleCancel handler: ^(UIAlertAction * _Nonnull action) {
+        
+    }]];
+    [[self.delegate currentViewController] presentViewController: alert animated: YES completion: nil];
     return NO;
 }
 
