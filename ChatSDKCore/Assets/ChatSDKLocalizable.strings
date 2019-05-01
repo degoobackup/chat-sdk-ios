@@ -27,7 +27,6 @@
 "bBack" = "Back";
 "bOpenInMaps" = "Open in maps";
 "bImageSaved" = "Image saved to library";
-"bLocation" = "Location";
 "bCompose" = "Compose";
 "bLoadingFriends" = "Loading Friends";
 "bLoading" = "Loading";
@@ -74,7 +73,6 @@
 "bTakePhotoOrVideo" = "Take photo or video";
 "bChooseExistingPhoto" = "Choose existing photo";
 "bChooseExistingVideo" = "Choose existing video";
-"bCurrentLocation" = "Current location";
 "bSend" = "Send";
 "bReply" = "Reply";
 "bRec" = "Record";
@@ -149,7 +147,6 @@
 "bDeleteContact" = "Delete Contact";
 "bDeleteContactMessage" = "Are you sure you want to delete this contact?";
 
-"bLocation" = "Location";
 "bCamera" = "Camera";
 "bChoosePhoto" = "Choose Photo";
 "bChooseVideo" = "Choose Video";
@@ -158,7 +155,6 @@
 "bImageMessagesNotSupported" = "Image messages are not supported";
 "bAudioMessagesNotSupported" = "Audio messages are not supported";
 "bStickerMessagesNotSupported" = "Sticker messages are not supported";
-"bLocationMessagesNotSupported" = "Location messages are not supported";
 "bVideoMessagesNotSupported" = "Video messages are not supported";
 
 "bRefreshingUsers" = "Message Burst";
@@ -167,7 +163,6 @@
 "bInviteBySMS" = "SMS";
 
 "bImageMessage" = "Image Message";
-"bLocationMessage" = "Location Message";
 "bAudioMessage" = "Audio Message";
 "bVideoMessage" = "Video Message";
 "bStickerMessage" = "Sticker Message";

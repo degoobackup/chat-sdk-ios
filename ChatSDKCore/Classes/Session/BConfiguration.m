@@ -33,7 +33,6 @@
 @synthesize pushNotificationSound;
 @synthesize firebaseGoogleServicesPlistName;
 @synthesize firebaseShouldConfigureAutomatically;
-@synthesize locationMessagesEnabled;
 @synthesize imageMessagesEnabled;
 @synthesize googleMapsApiKey;
 @synthesize clearDataWhenRootPathChanges;
@@ -113,7 +112,6 @@
         
         firebaseShouldConfigureAutomatically = YES;
         
-        locationMessagesEnabled = YES;
         imageMessagesEnabled = YES;
         termsAndConditionsEnabled = YES;
         

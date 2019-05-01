@@ -18,7 +18,6 @@
 
 @class BTextInputView;
 @class BImageViewController;
-@class BLocationViewController;
 @class BFileViewController;
 @class BMessageSection;
 @class BNotificationObserverList;
@@ -34,8 +33,6 @@
     UIGestureRecognizer * _tapRecognizer;
     
     UINavigationController * _imageViewNavigationController;
-
-    UINavigationController * _locationViewNavigationController;
 
     UIDocumentInteractionController * _documentInteractionController;
     

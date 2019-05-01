@@ -49,7 +49,6 @@
 #import <ChatSDK/BContactsViewController.h>
 #import <ChatSDK/BImagePickerViewController.h>
 #import <ChatSDK/BImageViewController.h>
-#import <ChatSDK/BLocationViewController.h>
 #import <ChatSDK/BUsersViewController.h>
 #import <ChatSDK/BEULAViewController.h>
 #import <ChatSDK/BInterfaceManager.h>
@@ -58,20 +57,15 @@
 #import <ChatSDK/BDefaultInterfaceAdapter.h>
 #import <ChatSDK/BMessageSection.h>
 
-#import <ChatSDK/BMapViewWrapper.h>
-#import <ChatSDK/BMapViewManager.h>
-
 #import <ChatSDK/BTextInputView.h>
 
 #import <ChatSDK/BTextMessageCell.h>
 #import <ChatSDK/BImageMessageCell.h>
-#import <ChatSDK/BLocationCell.h>
 #import <ChatSDK/BUserCell.h>
 #import <ChatSDK/BSystemMessageCell.h>
 
 #import <ChatSDK/BChatOption.h>
 #import <ChatSDK/BMediaChatOption.h>
-#import <ChatSDK/BLocationChatOption.h>
 #import <ChatSDK/BChatOptionDelegate.h>
 #import <ChatSDK/PChatOptionsHandler.h>
 #import <ChatSDK/BChatOptionsActionSheet.h>
@@ -79,7 +73,6 @@
 #import <ChatSDK/BMainControllerLifecycleHelper.h>
 
 #import <ChatSDK/PAction.h>
-#import <ChatSDK/BSelectLocationAction.h>
 #import <ChatSDK/BSelectMediaAction.h>
 #import <ChatSDK/BSelectFileAction.h>
 #import <ChatSDK/BDefaultUIModule.h>

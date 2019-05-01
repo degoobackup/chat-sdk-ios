@@ -15,7 +15,6 @@
 @protocol PElmThread;
 
 @class RXPromise;
-@class CLLocation;
 
 @protocol ElmChatViewDelegate <NSObject>
 
@@ -27,7 +26,6 @@
 -(RXPromise *) sendText: (NSString *) text;
 -(RXPromise *) sendText: (NSString *) text withMeta: (NSDictionary *)meta;
 -(RXPromise *) sendImage: (UIImage *) image;
--(RXPromise *) sendLocation: (CLLocation *) location;
 -(RXPromise *) sendAudio: (NSData *) audio withDuration: (double) duration;
 -(RXPromise *) sendVideo: (NSData *) video withCoverImage: (UIImage *) coverImage;
 -(RXPromise *) sendSystemMessage: (NSString *) text;

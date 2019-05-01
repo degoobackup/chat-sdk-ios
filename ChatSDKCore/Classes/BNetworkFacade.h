@@ -18,7 +18,6 @@
 @protocol PVideoMessageHandler;
 @protocol PAudioMessageHandler;
 @protocol PImageMessageHandler;
-@protocol PLocationMessageHandler;
 @protocol PAuthenticationHandler;
 @protocol PContactHandler;
 @protocol PTypingIndicatorHandler;
@@ -95,7 +94,6 @@
 -(id<PVideoMessageHandler>) videoMessage;
 -(id<PAudioMessageHandler>) audioMessage;
 -(id<PImageMessageHandler>) imageMessage;
--(id<PLocationMessageHandler>) locationMessage;
 -(id<PContactHandler>) contact;
 -(id<PTypingIndicatorHandler>) typingIndicator;
 -(id<PModerationHandler>) moderation;
@@ -121,7 +119,6 @@
 -(void) setVideoMessage: (id<PVideoMessageHandler>) videoMessage;
 -(void) setAudioMessage: (id<PAudioMessageHandler>) audioMessage;
 -(void) setImageMessage: (id<PImageMessageHandler>) imageMessage;
--(void) setLocationMessage: (id<PLocationMessageHandler>) locationMessage;
 -(void) setContact: (id<PContactHandler>) contact;
 -(void) setTypingIndicator: (id<PTypingIndicatorHandler>) typingIndicator;
 -(void) setModeration: (id<PModerationHandler>) moderation;

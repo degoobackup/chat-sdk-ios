@@ -76,7 +76,6 @@
     
     [self.tableView registerClass:[BTextMessageCell class] forCellReuseIdentifier:@(bMessageTypeText).stringValue];
     [self.tableView registerClass:[BImageMessageCell class] forCellReuseIdentifier:@(bMessageTypeImage).stringValue];
-    [self.tableView registerClass:[BLocationCell class] forCellReuseIdentifier:@(bMessageTypeLocation).stringValue];
     [self.tableView registerClass:[BSystemMessageCell class] forCellReuseIdentifier:@(bMessageTypeSystem).stringValue];
     
     // Some optional message types
@@ -459,18 +458,6 @@
             }];
         }
     }
-    if ([cell isKindOfClass:[BLocationCell class]]) {
-        if (!_locationViewNavigationController) {
-            _locationViewNavigationController = [BChatSDK.ui locationViewNavigationController];
-        }
-        
-        float longitude = [[cell.message compatibilityMeta][bMessageLongitude] floatValue];
-        float latitude = [[cell.message compatibilityMeta][bMessageLatitude] floatValue];
-        
-        [((id<PLocationViewController>) _locationViewNavigationController.topViewController) setLatitude:latitude longitude:longitude];
-
-        [self.navigationController presentViewController:_locationViewNavigationController animated:YES completion:Nil];
-    }
     
     if(BChatSDK.videoMessage && [cell isKindOfClass:BChatSDK.videoMessage.cellClass]) {
             
@@ -595,10 +582,6 @@
 
 - (RXPromise *) sendFileMessage: (NSDictionary *)file {
     return [self handleMessageSend:[delegate sendFile: file]];
-}
-
--(RXPromise *) sendLocationMessage: (CLLocation *) location {
-    return [self handleMessageSend:[delegate sendLocation: location]];
 }
 
 -(BOOL) showOptions {

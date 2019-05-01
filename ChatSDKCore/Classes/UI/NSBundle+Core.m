@@ -27,9 +27,6 @@
     if (message.type.intValue == bMessageTypeImage) {
         text = [self t:bImageMessage];
     }
-    else if(message.type.intValue == bMessageTypeLocation) {
-        text = [self t:bLocationMessage];
-    }
     else if(message.type.intValue == bMessageTypeAudio) {
         text = [self t:bAudioMessage];
     }

@@ -26,7 +26,6 @@
 #define bBack @"bBack"
 #define bImageSaved @"bImageSaved"
 #define bOpenInMaps @"bOpenInMaps"
-#define bLocation @"bLocation"
 #define bCompose @"bCompose"
 #define bCreateGroup @"bCreateGroup"
 
@@ -72,7 +71,6 @@
 #define bTakePhotoOrVideo @"bTakePhotoOrVideo"
 #define bChooseExistingPhoto @"bChooseExistingPhoto"
 #define bChooseExistingVideo @"bChooseExistingVideo"
-#define bCurrentLocation @"bCurrentLocation"
 #define bSend @"bSend"
 #define bOpen @"bOpen"
 #define bReply @"bReply"
@@ -163,14 +161,12 @@
 #define bAudioMessagesNotSupported @"bAudioMessagesNotSupported"
 #define bStickerMessagesNotSupported @"bStickerMessagesNotSupported"
 #define bFileMessagesNotSupported @"bFileMessagesNotSupported"
-#define bLocationMessagesNotSupported @"bLocationMessagesNotSupported"
 #define bVideoMessagesNotSupported @"bVideoMessagesNotSupported"
 
 #define bBlock @"bBlock"
 #define bUnblock @"bUnblock"
 
 #define bImageMessage @"bImageMessage"
-#define bLocationMessage @"bLocationMessage"
 #define bAudioMessage @"bAudioMessage"
 #define bVideoMessage @"bVideoMessage"
 #define bStickerMessage @"bStickerMessage"

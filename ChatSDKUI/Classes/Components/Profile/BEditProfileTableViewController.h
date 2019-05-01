@@ -25,7 +25,6 @@
 
 @property (weak, nonatomic) IBOutlet UITextView *statusTextView;
 @property (weak, nonatomic) IBOutlet UITextField *nameTextField;
-@property (weak, nonatomic) IBOutlet UITextField *locationTextField;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *genderSegmentControl;
 @property (weak, nonatomic) IBOutlet CountryPicker *countryPickerView;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *allowInvitesFromSegmentControl;
