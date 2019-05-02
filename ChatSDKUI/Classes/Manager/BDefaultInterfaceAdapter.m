@@ -145,7 +145,6 @@
     
     BOOL videoEnabled = BChatSDK.videoMessage != Nil;
     BOOL imageEnabled = BChatSDK.imageMessage != Nil && BChatSDK.config.imageMessagesEnabled;
-    BOOL locationEnabled = BChatSDK.locationMessage != Nil && BChatSDK.config.locationMessagesEnabled;
     
     if (imageEnabled && videoEnabled) {
         [options addObject:[[BMediaChatOption alloc] initWithType:bPictureTypeCameraVideo]];
@@ -159,9 +158,6 @@
     }
     if (videoEnabled) {
         [options addObject:[[BMediaChatOption alloc] initWithType:bPictureTypeAlbumVideo]];
-    }
-    if (locationEnabled) {
-        [options addObject:[[BLocationChatOption alloc] init]];
     }
     
     for(BChatOption * option in _additionalChatOptions) {
@@ -197,14 +193,6 @@
 
 -(UINavigationController *) imageViewNavigationController {
     return [self navigationControllerWithRootViewController:[self imageViewController]];
-}
-
--(UIViewController<PLocationViewController> *) locationViewController {
-    return [[BLocationViewController alloc] initWithNibName:nil bundle:Nil];
-}
-
--(UINavigationController *) locationViewNavigationController {
-    return [self navigationControllerWithRootViewController:self.locationViewController];
 }
 
 -(NSDictionary *) additionalSearchControllerNames {

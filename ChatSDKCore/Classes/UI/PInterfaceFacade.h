@@ -16,7 +16,6 @@
 @protocol PSendBar;
 @protocol BChatOptionDelegate;
 @protocol PImageViewController;
-@protocol PLocationViewController;
 
 @class BChatViewController;
 @class BFriendsListViewController;
@@ -75,9 +74,6 @@
 
 -(UIViewController<PImageViewController> *) imageViewController;
 -(UINavigationController *) imageViewNavigationController;
-
--(UIViewController<PLocationViewController> *) locationViewController;
--(UINavigationController *) locationViewNavigationController;
 
 -(UIViewController *) searchIndexViewControllerWithIndexes: (NSArray *) indexes withCallback: (void(^)(NSArray *)) callback;
 

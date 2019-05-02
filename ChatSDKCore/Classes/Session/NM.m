@@ -36,10 +36,6 @@
     return self.a.imageMessage;
 }
 
-+(id<PLocationMessageHandler>) locationMessage {
-    return self.a.locationMessage;
-}
-
 +(id<PPushHandler>) push {
     return self.a.push;
 }

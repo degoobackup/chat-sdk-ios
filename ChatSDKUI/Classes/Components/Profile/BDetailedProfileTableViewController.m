@@ -25,7 +25,6 @@
 @synthesize genderButton;
 @synthesize nameLabel;
 @synthesize statusTextView;
-@synthesize locationLabel;
 @synthesize overrideUser;
 
 @synthesize addFriendImageView;
@@ -37,7 +36,6 @@
 @synthesize blockUserActivityIndicator;
 
 @synthesize statusCell;
-@synthesize locationCell;
 @synthesize addFriendCell;
 @synthesize blockUserCell;
 
@@ -131,11 +129,6 @@
     statusTextView.text = status;
     
     [self cell:statusCell setHidden:!status || ![status stringByReplacingOccurrencesOfString:@" " withString:@""].length];
-    
-    NSString * location = [user.meta metaStringForKey:bLocation];
-    locationLabel.text = location;
-    
-    [self cell:locationCell setHidden:!location || !location.length];
     
     genderButton.selected = [[user.meta metaStringForKey:bGender] isEqualToString:@"F"];
     

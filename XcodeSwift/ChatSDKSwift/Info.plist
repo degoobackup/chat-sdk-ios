@@ -70,12 +70,6 @@
 	<string>To send an image message</string>
 	<key>NSContactsUsageDescription</key>
 	<string>To check if any of your contacts use this app</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>To send location messages</string>
-	<key>NSLocationUsageDescription</key>
-	<string>To send location messages</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>To send location messages</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>To send audio messages</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

@@ -32,7 +32,6 @@
 @property (weak, nonatomic) IBOutlet UIImageView *flagImageView;
 @property (weak, nonatomic) IBOutlet UITextView *statusTextView;
 @property (weak, nonatomic) IBOutlet UILabel *nameLabel;
-@property (weak, nonatomic) IBOutlet UILabel *locationLabel;
 @property (weak, nonatomic) IBOutlet UIButton *genderButton;
 @property (weak, nonatomic) IBOutlet UILabel *ageLabel;
 @property (weak, nonatomic) IBOutlet UIButton *editPhotoButton;
@@ -47,7 +46,6 @@
 
 // Cell Outlets
 @property (weak, nonatomic) IBOutlet UITableViewCell *statusCell;
-@property (weak, nonatomic) IBOutlet UITableViewCell *locationCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *ageCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *addFriendCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *blockUserCell;

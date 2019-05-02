@@ -15,7 +15,6 @@
 // How longer after the user stops typing until the recipient
 // stops seeing the "typing" indicator
 #define bTypingTimeout 5.0
-#define bLocationDefaultArea 1000
 
 #define bDefaultMessageColorMe @"abcff4"
 #define bDefaultMessageColorReply @"d7d4d3"

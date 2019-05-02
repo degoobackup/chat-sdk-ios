@@ -21,7 +21,6 @@
 
 @synthesize statusTextView;
 @synthesize nameTextField;
-@synthesize locationTextField;
 @synthesize genderSegmentControl;
 @synthesize countryPickerView;
 @synthesize allowInvitesFromSegmentControl;
@@ -44,7 +43,6 @@
     // Load the user's information
     statusTextView.text = [user.meta metaStringForKey:bDescription];
     nameTextField.text = user.name;
-    locationTextField.text = [user.meta metaStringForKey:bLocation];
     
     NSString * gender = [user.meta metaStringForKey:bGender];
     
@@ -91,13 +89,11 @@
     
     // Clear fields
     nameTextField.text = @"";
-    locationTextField.text = @"";
 }
 
 -(void) viewTapped {
     // Resign first responder for all fields
     [nameTextField resignFirstResponder];
-    [locationTextField resignFirstResponder];
     [statusTextView resignFirstResponder];
 }
 
@@ -115,7 +111,6 @@
     NSString * gender = genderSegmentControl.selectedSegmentIndex ? @"F" : @"M";
     
     [user updateMeta:@{bDescription: statusTextView.text ? statusTextView.text : @"",
-                       bLocation: locationTextField.text ? locationTextField.text : @"",
                        bGender: gender,
                        bCountry: countryPickerView.selectedCountryCode}];
     

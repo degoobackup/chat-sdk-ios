@@ -215,14 +215,6 @@
     return [RXPromise rejectWithReasonDomain:bErrorTitle code:0 description:bImageMessagesNotSupported];
 }
 
--(RXPromise *) sendLocation: (CLLocation *) location {
-    if (BChatSDK.locationMessage) {
-        return [self handleMessageSend:[BChatSDK.locationMessage sendMessageWithLocation:location
-                                                                withThreadEntityID:_thread.entityID]];
-    }
-    return [RXPromise rejectWithReasonDomain:bErrorTitle code:0 description:bLocationMessagesNotSupported];
-}
-
 -(RXPromise *) sendAudio: (NSData *) audio withDuration: (double) duration {
     if (BChatSDK.audioMessage) {
         return [self handleMessageSend:[BChatSDK.audioMessage sendMessageWithAudio:audio

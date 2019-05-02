@@ -35,30 +35,6 @@
     return [[NSUUID UUID] UUIDString];
 }
 
-+(MKCoordinateRegion) regionForLongitude: (double) longitude latitude: (double) latitude {
-    return [self regionForLongitude:longitude latitude:latitude area:bLocationDefaultArea];
-}
-
-+(MKCoordinateRegion) regionForLongitude: (double) longitude latitude: (double) latitude area: (float) area {
-    
-    CLLocationCoordinate2D location;
-    location.longitude = longitude;
-    location.latitude = latitude;
-    
-    return MKCoordinateRegionMakeWithDistance(location, area, area);
-}
-
-+(MKPointAnnotation *) annotationForLongitude: (double) longitude latitude: (double) latitude {
-    
-    CLLocationCoordinate2D location;
-    location.longitude = longitude;
-    location.latitude = latitude;
-    
-    MKPointAnnotation *annotation = [[MKPointAnnotation alloc] init];
-    [annotation setCoordinate:location];
-    return annotation;
-}
-
 +(UIColor*)colorWithHexString:(NSString*)hex {
     return [self colorWithHexString:hex withColorWeight:1.0];
 }

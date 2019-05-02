@@ -61,7 +61,6 @@
 +(id<PVideoMessageHandler>) videoMessage;
 +(id<PAudioMessageHandler>) audioMessage;
 +(id<PImageMessageHandler>) imageMessage;
-+(id<PLocationMessageHandler>) locationMessage;
 +(id<PPushHandler>) push;
 +(id<PContactHandler>) contact;
 +(id<PTypingIndicatorHandler>) typingIndicator;

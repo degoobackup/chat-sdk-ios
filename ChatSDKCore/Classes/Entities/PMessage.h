@@ -13,7 +13,6 @@
 typedef enum {
     bMessageTypeAll = -1,
     bMessageTypeText = 0,
-    bMessageTypeLocation = 1,
     bMessageTypeImage = 2,
     bMessageTypeAudio = 3,
     bMessageTypeVideo = 4,
@@ -78,7 +77,7 @@ typedef enum {
 -(NSDictionary *) compatibilityMeta;
 
 /**
- * @brief Message type - Text, image, location
+ * @brief Message type - Text, image
  * @param type NSNumber(bMessageType) Message type enum
  */
 -(void) setType: (NSNumber *) type;

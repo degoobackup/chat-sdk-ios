@@ -145,7 +145,6 @@
 @property (nonatomic, readwrite) UIFont * threadTimeFont;
 @property (nonatomic, readwrite) UIFont * threadSubtitleFont;
 
-@property (nonatomic, readwrite) BOOL locationMessagesEnabled;
 @property (nonatomic, readwrite) BOOL imageMessagesEnabled;
 
 @property (nonatomic, readwrite) int audioMessageMaxLengthSeconds;

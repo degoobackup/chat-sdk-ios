@@ -407,8 +407,6 @@
             }
             return 0;
         }
-        case bMessageTypeLocation:
-            return [self messageContentWidth:message];
         case bMessageTypeAudio:
             return 50;
         case bMessageTypeSticker:
@@ -528,7 +526,6 @@
     switch ((bMessageType)message.type.intValue) {
         case bMessageTypeText:
         case bMessageTypeImage:
-        case bMessageTypeLocation:
         case bMessageTypeAudio:
         case bMessageTypeVideo:
         case bMessageTypeSystem:
@@ -556,7 +553,6 @@
         case bMessageTypeText:
             return UIEdgeInsetsMake(8.0, 9.0, 8.0, 9.0);
         case bMessageTypeImage:
-        case bMessageTypeLocation:
         case bMessageTypeAudio:
         case bMessageTypeVideo:
             return UIEdgeInsetsMake(3.0, 3.0, 3.0, 3.0);
@@ -579,7 +575,6 @@
     switch ((bMessageType)message.type.intValue) {
         case bMessageTypeText:
         case bMessageTypeImage:
-        case bMessageTypeLocation:
         case bMessageTypeAudio:
         case bMessageTypeVideo:
         case bMessageTypeSticker:

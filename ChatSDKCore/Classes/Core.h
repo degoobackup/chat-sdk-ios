@@ -61,14 +61,12 @@
 #import <ChatSDK/PContactHandler.h>
 #import <ChatSDK/PTypingIndicatorHandler.h>
 #import <ChatSDK/PImageMessageHandler.h>
-#import <ChatSDK/PLocationMessageHandler.h>
 #import <ChatSDK/PModerationHandler.h>
 #import <ChatSDK/PSearchHandler.h>
 #import <ChatSDK/PPublicThreadHandler.h>
 #import <ChatSDK/PEncryptionHandler.h>
 #import <ChatSDK/PBlockingHandler.h>
 #import <ChatSDK/PLastOnlineHandler.h>
-#import <ChatSDK/PNearbyUsersHandler.h>
 #import <ChatSDK/PReadReceiptHandler.h>
 #import <ChatSDK/PStickerMessageHandler.h>
 #import <ChatSDK/PFileMessageHandler.h>
@@ -79,7 +77,6 @@
 #import <ChatSDK/BChatSDK.h>
 #import <ChatSDK/BConfiguration.h>
 #import <ChatSDK/PImageViewController.h>
-#import <ChatSDK/PLocationViewController.h>
 #import <ChatSDK/PFriendsListViewController.h>
 
 #import <ChatSDK/BHook.h>
@@ -88,7 +85,6 @@
 
 #import <ChatSDK/BBaseContactHandler.h>
 #import <ChatSDK/BBaseImageMessageHandler.h>
-#import <ChatSDK/BBaseLocationMessageHandler.h>
 #import <ChatSDK/BAudioManager.h>
 #import <ChatSDK/BInterfaceManager.h>
 
