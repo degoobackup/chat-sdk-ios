@@ -7,7 +7,7 @@
 
 #import "BInternetConnectivityHandler.h"
 #import <ChatSDK/Core.h>
-#import <Reachability/Reachability.h>
+#import "Reachability.h"
 
 @implementation BInternetConnectivityHandler
 
