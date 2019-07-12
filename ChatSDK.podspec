@@ -38,7 +38,7 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'Reachability' do |reach| 
-	  reach.source_files = ['ChatSDKExtras/Reachability/Classes/**/*']
+	  reach.source_files = ['ChatSDKExtras/Reachability/Classes/**/*', 'ChatSDKExtras/Reachability/Library/Reachability/**/*']
       reach.dependency 'ChatSDK/Core'
   end
 
