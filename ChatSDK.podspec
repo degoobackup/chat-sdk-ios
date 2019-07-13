@@ -44,7 +44,8 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'ReachabilityLibrary' do |reach|
-	reach.source_files = ['ChatSDKExtras/Reachability/Library/Reachability/**/*']
+	reach.source_files = ['ChatSDKExtras/Reachability/Library/Reachability/*.{h,m}']
+	reach.frameworks = 'SystemConfiguration'
   end
 
   s.subspec 'CoreData' do |cd|
