@@ -7,14 +7,14 @@
 
 #import "BInternetConnectivityHandler.h"
 #import <ChatSDK/Core.h>
-#import <Reachability/Reachability.h>
+#import "TMReachability.h"
 
 @implementation BInternetConnectivityHandler
 
 -(instancetype) init {
     if ((self = [super init])) {
-        [[Reachability reachabilityForInternetConnection] startNotifier];
-        [[NSNotificationCenter defaultCenter] addObserverForName:kReachabilityChangedNotification object:Nil queue:Nil usingBlock:^(NSNotification * notification) {
+        [[TMReachability reachabilityForInternetConnection] startNotifier];
+        [[NSNotificationCenter defaultCenter] addObserverForName:kTMReachabilityChangedNotification object:Nil queue:Nil usingBlock:^(NSNotification * notification) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [BChatSDK.hook executeHookWithName:bHookInternetConnectivityChanged data:Nil];
             });
@@ -24,7 +24,7 @@
 }
 
 -(BOOL) isConnected {
-    return [Reachability reachabilityForInternetConnection].isReachable;
+    return [TMReachability reachabilityForInternetConnection].isReachable;
 }
 
 @end
