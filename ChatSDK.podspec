@@ -29,7 +29,10 @@ Pod::Spec.new do |s|
 	  }
 
 	  core.dependency 'RXPromise', '~> 1.0'
-	  core.dependency 'AFNetworking', '~>3.2.1'
+	  core.dependency 'AFNetworking/Reachability'
+	  core.dependency 'AFNetworking/Serialization'
+	  core.dependency 'AFNetworking/Security'
+	  core.dependency 'AFNetworking/NSURLSession'
 	  core.dependency 'DateTools', '~> 2.0'
       core.dependency 'SAMKeychain'
 
