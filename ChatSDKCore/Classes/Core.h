@@ -13,7 +13,6 @@
 
 #import <RXPromise/RXPromise.h>
 #import <RXPromise/RXPromise+RXExtension.h>
-#import <AFNetworking/AFNetworking.h>
 #import <DateTools/NSDate+DateTools.h>
 
 #import <ChatSDK/NSArray+KeyPair.h>
