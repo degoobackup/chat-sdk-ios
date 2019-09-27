@@ -8,7 +8,8 @@
 
 #import "BCoreUtilities.h"
 //#import <DateTools.h>
-#import <ChatSDK/Core.h> 
+#import <ChatSDK/Core.h>
+#import "AFHTTPSessionManager.h"
 
 @implementation BCoreUtilities
 
